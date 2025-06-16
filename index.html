@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Eventos Culturales en Puertollano</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div id="eventos">
+        <header>
+            <h1>Página de Eventos Culturales en Puertollano</h1>
+        </header>
+
+        <main>
+            <div class="control_acceso">
+                <button class="invitado-button" onclick="location.href='views/usuarioEstandar.html'">Ingresar como invitado</button>
+                <form @submit.prevent="validateAdmin" class="admin-form">
+                    <label for="username">Administrador</label>
+                    <input type="text" v-model="username" placeholder="Usuario">
+                    <input type="password" v-model="password" placeholder="Contraseña">
+                    <button type="submit" class="admin-button">Ingresar</button>
+                </form>
+            </div>
+            <div v-show="showCover">
+                <img src="img/evento_portada.jpg" alt="portada">
+            </div>
+        </main>
+    </div>
+
+    <script src="lib/vue.js"></script>
+    <script src="js/eventos.js"></script>
+</body>
+</html>

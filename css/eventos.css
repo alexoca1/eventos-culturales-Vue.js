@@ -1,0 +1,272 @@
+/* eventos.css */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #1894ff; /* Gris Claro */
+    color: #333; /* Negro */
+}
+
+header {
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    padding: 0.2em;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+main {
+    padding: 1em;
+}
+
+.control {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+    padding: 1em;
+    background-color: #ffa07a; /* Ligero Tomate */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control .fecha {
+    display: flex;
+    align-items: center;
+}
+
+.control label {
+    font-weight: bold;
+    margin-right: 0.5em;
+}
+
+.control input[type="date"] {
+    padding: 0.5em;
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    margin-right: 0.5em;
+}
+
+.control button {
+    padding: 0.5em 1em;
+    width: 25%;
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 0.5em;
+}
+
+.control button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+.mostrar_evento {
+    display: flex;
+    flex-direction: row; /* Asegura distribución horizontal */
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    gap: 0.5rem; /* Espaciado uniforme entre elementos */
+    margin: 1em 0;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+.mostrar_evento > div {
+    flex: 1 1 32%; /* flex-grow, flex-shrink, flex-basis */
+    min-width: 360px; /* Ancho mínimo antes de envolver */
+    max-width: 360px; /* Evita que los elementos sean demasiado anchos */
+    padding: 1em;
+    margin-bottom: 1rem; /* Espaciado cuando los elementos se envuelven */
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    background-color: #ffa07a; 
+}
+
+.datos_eventos, .cartel, .mapa {
+    flex: 1; /* Asegura que las cajas ocupen el espacio disponible */
+    padding: 1em;
+    background-color: white; /* Blanco */
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.cartel {
+    padding: 1em 1em 0.5em 1em; /* Ajusta el padding inferior a 0.5em */
+}
+
+.cartel img {
+    width: 100%;
+    height: auto;
+    object-fit: contain; /* Asegura que la imagen se ajuste dentro del contenedor */
+    max-width: 100%; /* Asegura que la imagen no se salga del contenedor */
+    margin-bottom: 0.5em; /* Ajusta el margen inferior de la imagen */
+}
+
+.datos_eventos p, .cartel p, .mapa p {
+    margin: 0.5em 0;
+    font-size: 1em;
+    color: #333; /* Negro */
+}
+
+.datos_eventos p:first-child, .cartel p:first-child, .mapa p:first-child {
+    font-weight: bold;
+    margin-bottom: 0.5em;
+}
+
+.cartel div, .mapa div {
+    width: 100%;
+    height: auto;
+}
+
+.mapa div iframe {
+    width: 100%; /* Ancho fijo para las imágenes del mapa */
+    height: 300px; /* Alto fijo para las imágenes del mapa */
+    border: 0;
+}
+
+.mostrar_ingresar {
+    margin-top: 1em;
+    padding: 1em;
+    background-color: white; /* Blanco */
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 600px; /* Establece un ancho máximo para el contenedor */
+    width: 100%; /* Asegura que el contenedor ocupe el ancho disponible */
+    margin: 0 auto; /* Centra el contenedor horizontalmente */
+    background-color: #ffa07a; 
+}
+
+.mostrar_ingresar h3 {
+    margin-top: 0;
+    margin-bottom: 1em; /* Añade espacio debajo del título */
+}
+
+.mostrar_ingresar form {
+    display: flex;
+    flex-direction: column;
+}
+
+.mostrar_ingresar label {
+    margin-top: 0.5em;
+    margin-bottom: 0.25em; /* Añade espacio debajo de las etiquetas */
+}
+
+.mostrar_ingresar input, .mostrar_ingresar textarea {
+    margin-top: 0.25em; /* Reduce el margen superior de los inputs y textarea */
+    padding: 0.75em; /* Aumenta el padding para mayor comodidad */
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    width: 100%; /* Asegura que los inputs y textarea ocupen el ancho disponible */
+    max-width: 100%; /* Asegura que los inputs y textarea no excedan el ancho del contenedor */
+    box-sizing: border-box; /* Incluye padding y border en el ancho total */
+}
+
+.mostrar_ingresar button {
+    margin-top: 1em;
+    padding: 0.75em; /* Aumenta el padding para mayor comodidad */
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.mostrar_ingresar button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+
+.eliminar {
+    margin-top: 1em;
+    padding: 1em;
+    background-color: white; /* Blanco */
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #ffa07a; 
+}
+
+.eliminar h3 {
+    margin-top: 0;
+}
+
+.eliminar label {
+    display: block;
+    margin-top: 0.5em;
+    
+}
+
+.eliminar button {
+    margin-top: 1em;
+    padding: 0.5em;
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.eliminar button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+
+/* Asegurar que todas las imágenes tengan el mismo tamaño, excepto las de Google Maps */
+img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 800px; /* Tamaño fijo para todas las imágenes */
+    margin: 0 auto 1em auto; /* Centra la imagen horizontalmente */
+}
+
+.file-input-wrapper {
+    display: inline-block;
+    position: relative;
+}
+
+.file-input-wrapper input[type="file"] {
+    display: none;
+}
+
+.file-input-wrapper button {
+    padding: 0.5em 1em;
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.file-input-wrapper button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+
+@media (max-width: 768px) {
+    .control {
+        flex-direction: column; /* Cambia la dirección a columna */
+        align-items: flex-start; /* Alinea los elementos al inicio */
+    }
+
+    .control .fecha, .control button {
+        width: 100%; /* Asegura que los elementos ocupen el ancho completo */
+        margin-bottom: 0.5em; /* Añade margen inferior para separar elementos */
+    }
+
+    .control button {
+        margin-left: 0; /* Elimina el margen izquierdo para los botones */
+    }
+
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Eventos Culturales en Puertollano</title>
+    <link rel="stylesheet" href="../css/eventos.css">
+</head>
+<body>
+    <div id="eventos">
+        <header>
+            <h1>Página de Eventos Culturales en Puertollano</h1>
+        </header>
+
+        <main>
+            <div class="control">
+                <div class="fecha">
+                    <label for="">Buscar eventos por fecha</label>
+                    <input type="date" @change="searchEvent()" v-model="searchDate">
+                </div>
+            </div>
+
+            <div v-show="showCover">
+                <img src="../img/evento_portada.jpg" alt="portada">
+            </div>
+
+            <h2 v-show="showEvent">Eventos para el día {{formatDate(date)}}</h2>
+
+            <div class="mostrar_evento" v-show="showEvent">
+                <div class="cartel">
+                    <p>Cartel</p>
+                    <div v-html="poster"></div>
+                </div>
+                <div class="datos_eventos">
+                    <p>Fecha: <br>{{formatDate(date)}}</p>
+                    <p>Establecimiento: <br>{{establishment}}</p>
+                    <p>Domicilio: <br>{{address}}</p>
+                    <p>Evento principal: <br>{{content}}</p>
+                </div>
+                <div class="mapa">
+                    <p>Ubicación</p>
+                    <div v-html="map"></div>
+                </div>
+            </div>
+
+            <div v-show="showNoEvent">
+                <img src="../img/no_hay_eventos.jpg" alt="no hay evento">
+            </div>
+        </main>
+    </div>
+
+    <script src="../lib/vue.js"></script>
+    <script src="../js/eventos.js"></script>
+</body>
+</html>
