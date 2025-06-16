@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administrador de Eventos</title>
+    <link rel="stylesheet" href="../css/eventos.css">
+</head>
+<body>
+    <div id="eventos">
+        <header>
+            <h1>Página de Eventos Culturales en Puertollano</h1>
+        </header>
+
+        <main>
+            <div class="control">
+                <div class="fecha">
+                    <label for="">Buscar eventos por fecha</label>
+                    <input type="date" @change="searchEvent()" v-model="searchDate">
+                </div>
+                <button @click="addEvent()">Agregar evento nuevo</button>
+                <button @click="deleteEvent">Eliminar un elemento</button>
+            </div>
+
+            <div v-show="showCover">
+                <img src="../img/evento_portada.jpg" alt="portada">
+            </div>
+
+            <h2 v-show="showEvent">Eventos para el día {{formatDate(date)}}</h2>
+
+            <div class="mostrar_evento" v-show="showEvent">
+                <div class="cartel">
+                    <p>Cartel</p>
+                    <div v-html="poster"></div>
+                </div>
+                <div class="datos_eventos">
+                    <p>Fecha: <br>{{formatDate(date)}}</p>
+                    <p>Establecimiento: <br>{{establishment}}</p>
+                    <p>Domicilio: <br>{{address}}</p>
+                    <p>Evento principal: <br>{{content}}</p>
+                </div>
+                <div class="mapa">
+                    <p>Ubicación</p>
+                    <div v-html="map"></div>
+                </div>
+            </div>
+
+            <div v-show="showNoEvent">
+                <img src="../img/no_hay_eventos.jpg" alt="no hay evento">
+            </div>
+
+            <div v-show="showEventSaved">
+                <img src="../img/evento_guardado.jpg" alt="evento guardado">
+            </div>
+
+            <div v-show="showEventDeleted">
+                <img src="../img/eventos_eliminados.jpg" alt="evento eliminado">
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showForm">
+                <h3>Ingresa un evento nuevo</h3>
+                <form @submit.prevent="submitForm">
+                    <div class="fecha">
+                        <label>Ingresar Fecha</label>
+                        <input type="date" v-model="inputDate" style="width: 120px;"><br>
+                    </div>
+                    <label>Ingresar Establecimiento</label>
+                    <input type="text" v-model="inputEstablishment"><br>
+                    <label>Ingresar Domicilio</label>
+                    <input type="text" v-model="inputAddress"><br>
+                    <label>Ingresar Evento Principal</label>
+                    <input type="text" v-model="inputContent"><br>
+                    <label>Ingresar Cartel</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/gif" style="display:none;">
+                        <button type="button" onclick="document.getElementById('fileInput').click()">Elegir archivo</button>
+                    </div><br>
+                    <div v-html="inputPoster" v-if="inputPoster"></div>
+                    <label>Ingresar Mapa</label>
+                    <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
+                    <button type="submit">Guardar Evento</button>
+                </form>
+            </div>
+
+            <div class="eliminar" v-show="showDelete">
+                <h3>Elimina uno o más eventos</h3>
+                <div v-for="(event, index) in events" :key="index">
+                    <label>
+                        <input type="checkbox" v-model="selectedEvents[index]">
+                        Evento {{ index + 1 }}: fecha: {{formatDate(event.date)}}, establecimiento {{event.establishment}}, evento principal: {{event.content}}
+                    </label>
+                </div>
+                <button @click="deleteSelectedEvents">Eliminar Eventos Seleccionados</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="../lib/vue.js"></script>
+    <script src="../js/eventos.js"></script>
+</body>
+</html>

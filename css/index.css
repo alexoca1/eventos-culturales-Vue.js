@@ -1,0 +1,122 @@
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4; /* Gris Claro */
+    color: #333; /* Negro */
+    background-color: #1894ff;
+}
+
+header {
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    padding: 1em;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+main {
+    padding: 1em;
+}
+
+/* Estilos para .control_acceso */
+.control_acceso {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1em;
+    padding: 1em;
+    background-color: #ffa07a; /* Ligero Tomate */
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan */
+}
+
+/* Botón de Ingreso como Invitado */
+.invitado-button {
+    padding: 0.5em 1em;
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-right: 1em;
+}
+
+.invitado-button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+
+/* Formulario de Ingreso como Administrador */
+.admin-form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.admin-form label {
+    font-weight: bold;
+    margin: 0 0.5em;
+    color: #333; /* Negro */
+}
+
+.admin-form input {
+    padding: 0.5em;
+    border: 1px solid #ccc; /* Gris */
+    border-radius: 5px;
+    margin: 0 0.5em;
+    width: auto;
+    box-sizing: border-box;
+}
+
+.admin-form input::placeholder {
+    color: #999; /* Gris más claro para el placeholder */
+}
+
+.admin-button {
+    padding: 0.5em 1em;
+    background-color: #ff6347; /* Tomate */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-left: 0.5em;
+}
+
+.admin-button:hover {
+    background-color: #e53900; /* Tomate Oscuro */
+}
+img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 800px; /* Tamaño fijo para todas las imágenes */
+    margin: 0 auto 1em auto; /* Centra la imagen horizontalmente */
+}
+
+/* Media query para dispositivos más pequeños */
+@media (max-width: 768px) {
+    .control_acceso {
+        flex-direction: column; /* Cambia la dirección a columna */
+        align-items: flex-start; /* Alinea los elementos al inicio */
+    }
+
+    .invitado-button, .admin-form {
+        width: 100%; /* Asegura que los elementos ocupen el ancho completo */
+        margin-bottom: 0.5em; /* Añade margen inferior para separar elementos */
+    }
+
+    .admin-form {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-form label, .admin-form input, .admin-button {
+        width: 100%;
+        margin: 0.25em 0;
+    }
+}
