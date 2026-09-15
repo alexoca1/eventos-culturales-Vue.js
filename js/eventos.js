@@ -1,6 +1,6 @@
-new Vue({
-    el: "#eventos",
-    data: {
+Vue.createApp({
+    data() {
+        return {
         username: "",
         password: "",
         showEvent: false,
@@ -29,7 +29,7 @@ new Vue({
             {
                 establishment: "El mesoncito",
                 address: "C. Aduana, 3, 13500 Puertollano, Ciudad Real",
-                date: "2025-01-01",
+                date: "2026-09-01",
                 content: "Fiesta Mexicana",
                 poster: '<img src="../img/imagen1.jpg" alt="evento imagen" style="width: 400px; height: 400px;">',
                 map: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.351416594194!2d-4.11284152355524!3d38.68677135910375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf53e9f8d2b%3A0xeedf97f108f04ee2!2sBar%20El%20Mesoncito!5e0!3m2!1ses!2ses!4v1733933838752!5m2!1ses!2ses" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
@@ -37,7 +37,7 @@ new Vue({
             {
                 establishment: "Restaurante HAVANA",
                 address: "Paseo de San Gregorio, S/N, 13500 Puertollano, Ciudad Real",
-                date: "2025-02-01",
+                date: "2026-10-01",
                 content: "Monologo Danni Robira",
                 poster: '<img src="../img/imagen2.jpg" alt="evento imagen" style="width: 400px; height: 400px;">',
                 map: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.274502406314!2d-4.109504855540716!3d38.6885383902203!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d951c6cd995%3A0x6023f1902f9b8560!2sRestaurante%20HAVANA!5e0!3m2!1ses!2ses!4v1733933986816!5m2!1ses!2ses" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
@@ -45,7 +45,7 @@ new Vue({
             {
                 establishment: "Restaurante Asiático NAKAMA",
                 address: "C. Vía Crucis, 19, 13500 Puertollano, Ciudad Real",
-                date: "2025-03-01",
+                date: "2026-11-01",
                 content: "Exhibición de tapas vegetarianas",
                 poster: '<img src="../img/imagen3.jpg" alt="evento imagen" style="width: 400px; height: 400px;">',
                 map: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.4604849300454!2d-4.112005365112297!3d38.684265499999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d274653c52b%3A0x586b94b2d3ae47f3!2sRestaurante%20Asi%C3%A1tico%20NAKAMA!5e0!3m2!1ses!2ses!4v1733934626820!5m2!1ses!2ses" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
@@ -53,7 +53,7 @@ new Vue({
             {
                 establishment: "Auditorio Municipal",
                 address: "Pl. Mariana Pineda, 0, 13500 Puertollano, Ciudad Real",
-                date: "2025-04-01",
+                date: "2026-12-01",
                 content: "Rock la Mancha Festival",
                 poster: '<img src="../img/imagen4.jpg" alt="evento imagen" style="width: 400px; height: 400px;">',
                 map: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.1514033241547!2d-4.109704738305717!3d38.69136633423611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf6636e3549%3A0x4b13ec5f916e923c!2sAuditorio%20Municipal!5e0!3m2!1ses!2ses!4v1733934475151!5m2!1ses!2ses" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
@@ -61,12 +61,13 @@ new Vue({
             {
                 establishment: "Museo Cristina García Rodero",
                 address: "Pl. Constitución, s/n, 13500 Puertollano, Ciudad Real",
-                date: "2025-05-01",
+                date: "2027-01-01",
                 content: "Exposición de Arte",
                 poster: '<img src="../img/imagen5.jpg" alt="evento imagen" style="width: 400px; height: 400px;">',
                 map: '<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d389.2939734827675!2d-4.1110539430529505!3d38.68676282940689!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8c5ff5e8e3b3%3A0x5dbac4a9911589ec!2sMuseo%20Cristina%20Garc%C3%ADa%20Rodero!5e0!3m2!1ses!2ses!4v1733934734205!5m2!1ses!2ses" width="400" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
             }
         ]
+        };
     },
     methods: {
         validateAdmin() {
@@ -211,4 +212,4 @@ new Vue({
             }
         }
     }
-});
+}).mount("#eventos");
