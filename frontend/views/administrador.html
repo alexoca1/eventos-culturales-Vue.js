@@ -18,7 +18,7 @@
                     <input type="date" @change="searchEvent()" v-model="searchDate">
                 </div>
                 <button @click="addEvent()">Agregar evento nuevo</button>
-                <button @click="deleteEvent">Eliminar un elemento</button>
+                <button @click="manageEvents()">Gestionar eventos</button>
             </div>
 
             <div v-show="showCover">
@@ -27,20 +27,20 @@
 
             <h2 v-show="showEvent">Eventos para el día {{formatDate(date)}}</h2>
 
-            <div class="mostrar_evento" v-show="showEvent">
+            <div class="mostrar_evento" v-show="showEvent" v-for="ev in dayEvents" :key="ev.id">
                 <div class="cartel">
-                    <p>Cartel</p>
-                    <div v-html="poster"></div>
+                    <p>Cartel (clic para ampliar)</p>
+                    <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
                 </div>
                 <div class="datos_eventos">
-                    <p>Fecha: <br>{{formatDate(date)}}</p>
-                    <p>Establecimiento: <br>{{establishment}}</p>
-                    <p>Domicilio: <br>{{address}}</p>
-                    <p>Evento principal: <br>{{content}}</p>
+                    <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                    <p>Establecimiento: <br>{{ev.establishment}}</p>
+                    <p>Domicilio: <br>{{ev.address}}</p>
+                    <p>Evento principal: <br>{{ev.content}}</p>
                 </div>
                 <div class="mapa">
                     <p>Ubicación</p>
-                    <div v-html="map"></div>
+                    <div v-html="ev.map"></div>
                 </div>
             </div>
 
@@ -52,12 +52,12 @@
                 <img src="../img/evento_guardado.jpg" alt="evento guardado">
             </div>
 
-            <div v-show="showEventDeleted">
-                <img src="../img/eventos_eliminados.jpg" alt="evento eliminado">
+            <div v-if="lightboxSrc" class="lightbox" @click="closeLightbox">
+                <img :src="lightboxSrc" alt="cartel ampliado">
             </div>
 
             <div class="mostrar_ingresar" v-show="showForm">
-                <h3>Ingresa un evento nuevo</h3>
+                <h3>{{ editingId ? "Edita el evento" : "Ingresa un evento nuevo" }}</h3>
                 <form @submit.prevent="submitForm">
                     <div class="fecha">
                         <label>Ingresar Fecha</label>
@@ -71,25 +71,30 @@
                     <input type="text" v-model="inputContent"><br>
                     <label>Ingresar Cartel</label>
                     <div class="file-input-wrapper">
-                        <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/gif" style="display:none;">
+                        <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/webp" style="display:none;">
                         <button type="button" onclick="document.getElementById('fileInput').click()">Elegir archivo</button>
                     </div><br>
                     <div v-html="inputPoster" v-if="inputPoster"></div>
                     <label>Ingresar Mapa</label>
                     <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
-                    <button type="submit">Guardar Evento</button>
+                    <button type="submit">{{ editingId ? "Guardar cambios" : "Guardar Evento" }}</button>
+                    <button type="button" @click="cancelForm">Cancelar</button>
                 </form>
             </div>
 
-            <div class="eliminar" v-show="showDelete">
-                <h3>Elimina uno o más eventos</h3>
-                <div v-for="(event, index) in events" :key="index">
-                    <label>
-                        <input type="checkbox" v-model="selectedEvents[index]">
-                        Evento {{ index + 1 }}: fecha: {{formatDate(event.date)}}, establecimiento {{event.establishment}}, evento principal: {{event.content}}
-                    </label>
+            <div class="gestionar" v-show="showManage">
+                <h3>Gestionar eventos</h3>
+                <div class="evento-row" v-for="event in events" :key="event.id">
+                    <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
+                    <div class="evento-info">
+                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong><br>
+                        {{event.content}}
+                    </div>
+                    <div class="evento-acciones">
+                        <button @click="editEvento(event)">Editar</button>
+                        <button @click="deleteOne(event.id)">Eliminar</button>
+                    </div>
                 </div>
-                <button @click="deleteSelectedEvents">Eliminar Eventos Seleccionados</button>
             </div>
         </main>
     </div>

@@ -270,3 +270,62 @@ img {
     }
 
 }
+
+/* Lightbox: cartel HD al hacer clic */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    cursor: zoom-out;
+}
+
+.lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+/* Gestionar eventos: tarjeta compacta por evento */
+.gestionar {
+    margin-top: 1em;
+    padding: 1em;
+    background-color: #ffa07a; /* Ligero Tomate */
+    border-radius: 5px;
+}
+
+.evento-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    padding: 0.35em 0.5em;
+    margin-bottom: 0.35em;
+    background-color: white;
+    border-radius: 5px;
+}
+
+.evento-thumb {
+    cursor: zoom-in;
+    flex-shrink: 0;
+}
+
+.evento-thumb img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    display: block;
+    border-radius: 4px;
+}
+
+.evento-info {
+    flex-grow: 1;
+}
+
+.evento-acciones {
+    display: flex;
+    gap: 0.5em;
+    flex-shrink: 0;
+}

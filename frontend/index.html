@@ -15,8 +15,8 @@
             <div class="control_acceso">
                 <button class="invitado-button" onclick="location.href='views/usuarioEstandar.html'">Ingresar como invitado</button>
                 <form @submit.prevent="validateAdmin" class="admin-form">
-                    <label for="username">Administrador</label>
-                    <input type="text" v-model="username" placeholder="Usuario">
+                    <label for="username">Administrador (email)</label>
+                    <input type="text" v-model="username" placeholder="Email">
                     <input type="password" v-model="password" placeholder="Contraseña">
                     <button type="submit" class="admin-button">Ingresar</button>
                 </form>
