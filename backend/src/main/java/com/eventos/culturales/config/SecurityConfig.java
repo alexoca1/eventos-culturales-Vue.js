@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -41,13 +42,29 @@ public class SecurityConfig {
     }
 
     // Cadena 1: endpoints públicos explícitos (sin JWT). Todo lo que no case aquí cae a la cadena 2.
+    // OJO: los GET de /eventos van con matcher a medida — /eventos/mios y /eventos/pendientes
+    // NO son públicos y deben caer a la cadena 2 (JWT + @PreAuthorize). Un simple "/eventos/**"
+    // o "/eventos/{id}" también casaría con ellos (un segmento cualquiera), por eso la exclusión explícita.
     @Bean
     @Order(1)
-    public SecurityFilterChain publicChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain publicChain(HttpSecurity http, LoginRateLimitFilter loginRateLimitFilter) throws Exception {
         http
                 .securityMatchers(matchers -> matchers
                         .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout", "/auth/register")
-                        .requestMatchers(HttpMethod.GET, "/eventos", "/eventos/**")
+                        .requestMatchers(request -> {
+                            if (!HttpMethod.GET.matches(request.getMethod())) return false;
+                            // Igual que AntPathRequestMatcher: servletPath + pathInfo
+                            // (en MockMvc la ruta viaja en pathInfo; en Tomcat, en servletPath)
+                            String pathInfo = request.getPathInfo();
+                            String path = request.getServletPath()
+                                    + (pathInfo != null ? pathInfo : "");
+                            if ("/eventos".equals(path)) return true;
+                            // Autenticados (caen a la cadena 2): mios, pendientes y favoritos
+                            return path.startsWith("/eventos/")
+                                    && !"/eventos/mios".equals(path)
+                                    && !"/eventos/pendientes".equals(path)
+                                    && !"/eventos/favoritos".equals(path);
+                        })
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
                 )
                 .csrf(csrf -> csrf.disable())
@@ -55,6 +72,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                // Rate limiting solo para POST /auth/login (el propio filtro ignora el resto),
+                // antes de validar credenciales para no gastar BCrypt en peticiones bloqueadas.
+                .addFilterBefore(loginRateLimitFilter, AuthorizationFilter.class)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
@@ -84,7 +104,7 @@ public class SecurityConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withSecretKey(jwtService.getSecretKey())
-                .macAlgorithm(org.springframework.security.oauth2.jose.jws.MacAlgorithm.HS384)
+                .macAlgorithm(org.springframework.security.oauth2.jose.jws.MacAlgorithm.HS256)
                 .build();
     }
 
@@ -103,6 +123,14 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // Rate limiting en memoria para el login (ver LoginRateLimitFilter).
+    @Bean
+    public LoginRateLimitFilter loginRateLimitFilter(
+            @Value("${app.security.login-rate-limit.max-attempts:5}") int maxAttempts,
+            @Value("${app.security.login-rate-limit.window-seconds:60}") long windowSeconds) {
+        return new LoginRateLimitFilter(maxAttempts, windowSeconds, java.time.Clock.systemUTC());
     }
 
     @Bean

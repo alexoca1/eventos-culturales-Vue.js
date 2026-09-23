@@ -33,7 +33,9 @@ public class JwtService {
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_MS))
                 .claim("roles", roles)
-                .signWith(getSecretKey())
+                // HS256 explícito: coherente con el mínimo documentado de 32 bytes y con el JwtDecoder.
+                // (signWith(key) a secas elegiría el algoritmo por longitud de clave y rompería la validación.)
+                .signWith(getSecretKey(), Jwts.SIG.HS256)
                 .compact();
     }
 

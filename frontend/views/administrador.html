@@ -17,8 +17,23 @@
                     <label for="">Buscar eventos por fecha</label>
                     <input type="date" @change="searchEvent()" v-model="searchDate">
                 </div>
+                <div class="fecha">
+                    <label for="">Filtrar por categoría</label>
+                    <select @change="searchEvent()" v-model="searchCategoria">
+                        <option value="">Todas</option>
+                        <option value="MUSICA">Música</option>
+                        <option value="TEATRO">Teatro</option>
+                        <option value="EXPOSICION">Exposición</option>
+                        <option value="CINE">Cine</option>
+                        <option value="LITERATURA">Literatura</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="OTROS">Otra</option>
+                    </select>
+                </div>
                 <button @click="addEvent()">Agregar evento nuevo</button>
                 <button @click="manageEvents()">Gestionar eventos</button>
+                <button @click="cargarPendientes()">Pendientes de revisión</button>
+                <button @click="cargarUsuarios()">Gestión de usuarios</button>
             </div>
 
             <div v-show="showCover">
@@ -34,6 +49,8 @@
                 </div>
                 <div class="datos_eventos">
                     <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                    <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                    <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
                     <p>Establecimiento: <br>{{ev.establishment}}</p>
                     <p>Domicilio: <br>{{ev.address}}</p>
                     <p>Evento principal: <br>{{ev.content}}</p>
@@ -63,12 +80,33 @@
                         <label>Ingresar Fecha</label>
                         <input type="date" v-model="inputDate" style="width: 120px;"><br>
                     </div>
+                    <div class="fecha">
+                        <label>Fecha fin (opcional, vacío = un día)</label>
+                        <input type="date" v-model="inputFechaFin" style="width: 120px;"><br>
+                    </div>
+                    <div class="fecha">
+                        <label>Hora inicio (opcional)</label>
+                        <input type="time" v-model="inputHoraInicio" style="width: 110px;">
+                        <label>Hora fin (opcional)</label>
+                        <input type="time" v-model="inputHoraFin" style="width: 110px;"><br>
+                    </div>
                     <label>Ingresar Establecimiento</label>
                     <input type="text" v-model="inputEstablishment"><br>
                     <label>Ingresar Domicilio</label>
                     <input type="text" v-model="inputAddress"><br>
                     <label>Ingresar Evento Principal</label>
                     <input type="text" v-model="inputContent"><br>
+                    <label>Categoría (opcional)</label>
+                    <select v-model="inputCategoria">
+                        <option value="">Sin categoría</option>
+                        <option value="MUSICA">Música</option>
+                        <option value="TEATRO">Teatro</option>
+                        <option value="EXPOSICION">Exposición</option>
+                        <option value="CINE">Cine</option>
+                        <option value="LITERATURA">Literatura</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="OTROS">Otra</option>
+                    </select><br>
                     <label>Ingresar Cartel</label>
                     <div class="file-input-wrapper">
                         <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/webp" style="display:none;">
@@ -88,11 +126,69 @@
                     <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
                     <div class="evento-info">
                         <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong><br>
-                        {{event.content}}
+                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
                     </div>
                     <div class="evento-acciones">
                         <button @click="editEvento(event)">Editar</button>
                         <button @click="deleteOne(event.id)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gestionar" v-show="showPendientes">
+                <h3>Pendientes de revisión</h3>
+                <p v-if="pendientes.length === 0">No hay solicitudes pendientes.</p>
+                <div class="evento-row" v-for="event in pendientes" :key="event.id">
+                    <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
+                    <div class="evento-info">
+                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong>
+                        <span class="badge" :class="'badge-' + (event.estado || '').toLowerCase()">{{tipoSolicitud(event.estado)}}</span><br>
+                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
+                        <br><small>De: {{event.creadoPor || "?"}}</small>
+                    </div>
+                    <div class="evento-acciones">
+                        <button @click="aprobar(event.id)">Aprobar</button>
+                        <button @click="pedirRechazo(event.id)">Rechazar</button>
+                    </div>
+                </div>
+                <div v-if="rechazoId !== null">
+                    <label>Motivo del rechazo (opcional)</label>
+                    <input type="text" v-model="rechazoMotivo" placeholder="Ej: falta el cartel">
+                    <button @click="confirmarRechazo()">Confirmar rechazo</button>
+                    <button @click="rechazoId = null">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="gestionar" v-show="showUsuarios">
+                <h3>Gestión de usuarios</h3>
+                <form @submit.prevent="crearAdmin">
+                    <h4>Crear admin</h4>
+                    <input type="email" v-model="nuevoAdminEmail" placeholder="Email" required>
+                    <input type="password" v-model="nuevoAdminPassword" placeholder="Contraseña (mín. 6)" required minlength="6">
+                    <input type="text" v-model="nuevoAdminNombre" placeholder="Nombre" required>
+                    <input type="text" v-model="nuevoAdminApellidos" placeholder="Apellidos" required>
+                    <button type="submit">Crear admin</button>
+                    <p v-if="crearAdminError" style="color: red;">{{crearAdminError}}</p>
+                </form>
+                <p v-if="usuarios.length === 0">No hay usuarios.</p>
+                <div class="evento-row" v-for="u in usuarios" :key="u.id">
+                    <div class="evento-info">
+                        <strong>{{u.email}}</strong>
+                        <span v-for="rol in (u.roles || [])" :key="rol" class="badge" :class="'badge-rol-' + rol.toLowerCase().replace('role_', '')">{{textoRol(rol)}}</span>
+                        <span class="badge" :class="u.enabled ? 'badge-aprobado' : 'badge-rechazado'">{{u.enabled ? "Activo" : "Desactivado"}}</span><br>
+                        <small>{{u.nombre}} {{u.apellidos}}</small>
+                        <div v-if="editandoUsuarioId === u.id">
+                            <label><input type="checkbox" value="ROLE_USER" v-model="editRoles"> Usuario</label>
+                            <label><input type="checkbox" value="ROLE_ORGANIZADOR" v-model="editRoles"> Organizador</label>
+                            <label><input type="checkbox" value="ROLE_ADMIN" v-model="editRoles" :disabled="esUnoMismo(u)"> Admin</label>
+                            <button @click="editarRolesUsuario(u)">Guardar roles</button>
+                            <button @click="cancelarEditarRoles()">Cancelar</button>
+                            <p v-if="editError" style="color: red;">{{editError}}</p>
+                        </div>
+                    </div>
+                    <div class="evento-acciones">
+                        <button @click="empezarEditarRoles(u)">Editar roles</button>
+                        <button @click="toggleActivo(u)" :disabled="esUnoMismo(u)">{{u.enabled ? "Desactivar" : "Activar"}}</button>
                     </div>
                 </div>
             </div>

@@ -7,8 +7,8 @@
 ## 1. Variables de entorno
 
 ```bash
-# Desarrollo local (los defaults de application.properties bastan para arrancar)
-JWT_SECRET=$(openssl rand -base64 32)   # obligatoria fuera de local; en local hay default de desarrollo
+# Obligatorias SIEMPRE (local, tests y prod): sin JWT_SECRET la app no arranca
+JWT_SECRET=$(openssl rand -base64 32)
 ADMIN_SEED_PASSWORD=CambiaEstaPass123    # password del admin sembrado (default: admin123)
 
 # Opcional en local; obligatorio en prod (Aiven/Render)
@@ -41,6 +41,7 @@ Al arrancar con la BD vacía se siembran `admin@test.com` + 5 eventos de ejemplo
 ```bash
 ./mvnw.cmd test   # 38 tests: Mockito (servicios) + MockMvc/Security Test (autorización)
 ```
+Los tests también necesitan `JWT_SECRET` en el entorno (PowerShell: `$env:JWT_SECRET="..."`), ya que no hay fallback ni siquiera para tests.
 
 ## 4. Docker (Render)
 

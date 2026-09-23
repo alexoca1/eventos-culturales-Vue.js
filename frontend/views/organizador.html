@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel del Organizador</title>
+    <link rel="stylesheet" href="../css/eventos.css">
+</head>
+<body>
+    <div id="eventos">
+        <header>
+            <h1>Panel del Organizador</h1>
+        </header>
+
+        <main>
+            <div class="control">
+                <button @click="addEvent()">Nuevo evento</button>
+            </div>
+
+            <div class="gestionar" v-show="misEventos.length > 0">
+                <h3>Mis eventos</h3>
+                <div class="evento-row" v-for="event in misEventos" :key="event.id">
+                    <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
+                    <div class="evento-info">
+                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong>
+                        <span class="badge" :class="'badge-' + (event.estado || '').toLowerCase()">{{textoEstado(event.estado)}}</span><br>
+                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
+                        <br v-if="event.estado === 'RECHAZADO' && event.motivoRechazo"><em v-if="event.estado === 'RECHAZADO' && event.motivoRechazo">Motivo: {{event.motivoRechazo}}</em>
+                    </div>
+                    <div class="evento-acciones">
+                        <button @click="editEventoOrg(event)">Editar</button>
+                        <button @click="pedirEliminarOrg(event.id)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="showCover">
+                <img src="../img/evento_portada.jpg" alt="portada">
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showForm">
+                <h3>{{ editingId ? "Edita tu evento" : "Nuevo evento (quedará pendiente de revisión)" }}</h3>
+                <form @submit.prevent="previsualizar">
+                    <div class="fecha">
+                        <label>Ingresar Fecha</label>
+                        <input type="date" v-model="inputDate" style="width: 120px;"><br>
+                    </div>
+                    <div class="fecha">
+                        <label>Fecha fin (opcional, vacío = un día)</label>
+                        <input type="date" v-model="inputFechaFin" style="width: 120px;"><br>
+                    </div>
+                    <div class="fecha">
+                        <label>Hora inicio (opcional)</label>
+                        <input type="time" v-model="inputHoraInicio" style="width: 110px;">
+                        <label>Hora fin (opcional)</label>
+                        <input type="time" v-model="inputHoraFin" style="width: 110px;"><br>
+                    </div>
+                    <label>Ingresar Establecimiento</label>
+                    <input type="text" v-model="inputEstablishment"><br>
+                    <label>Ingresar Domicilio</label>
+                    <input type="text" v-model="inputAddress"><br>
+                    <label>Ingresar Evento Principal</label>
+                    <input type="text" v-model="inputContent"><br>
+                    <label>Categoría (opcional)</label>
+                    <select v-model="inputCategoria">
+                        <option value="">Sin categoría</option>
+                        <option value="MUSICA">Música</option>
+                        <option value="TEATRO">Teatro</option>
+                        <option value="EXPOSICION">Exposición</option>
+                        <option value="CINE">Cine</option>
+                        <option value="LITERATURA">Literatura</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="OTROS">Otra</option>
+                    </select><br>
+                    <label>Ingresar Cartel</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/webp" style="display:none;">
+                        <button type="button" onclick="document.getElementById('fileInput').click()">Elegir archivo</button>
+                    </div><br>
+                    <div v-html="inputPoster" v-if="inputPoster"></div>
+                    <label>Ingresar Mapa</label>
+                    <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
+                    <button type="submit">Previsualizar</button>
+                    <button type="button" @click="cancelForm">Cancelar</button>
+                </form>
+            </div>
+
+            <div v-show="showPreview" v-if="previewEv">
+                <h3>Así quedará publicado tu evento</h3>
+                <div class="mostrar_evento">
+                    <div class="cartel">
+                        <p>Cartel</p>
+                        <div v-html="previewEv.poster"></div>
+                    </div>
+                    <div class="datos_eventos">
+                        <p>Fecha: <br>{{formatDate(previewEv.date)}}</p>
+                        <p v-if="formatRango(previewEv)">Rango: <br>{{formatRango(previewEv)}}</p>
+                        <p v-if="previewEv.horaInicio">Horario: <br>{{formatHorario(previewEv)}}</p>
+                        <p>Establecimiento: <br>{{previewEv.establishment}}</p>
+                        <p>Domicilio: <br>{{previewEv.address}}</p>
+                        <p>Evento principal: <br>{{previewEv.content}}</p>
+                    </div>
+                    <div class="mapa">
+                        <p>Ubicación</p>
+                        <div v-html="previewEv.map"></div>
+                    </div>
+                </div>
+                <div class="aviso-revision">
+                    <strong>{{ editingId ? "Esta edición quedará pendiente de revisión. El evento dejará de ser visible al público hasta que se apruebe." : "Este evento quedará pendiente de revisión. Un administrador debe aprobarlo antes de que sea visible al público." }}</strong>
+                </div>
+                <button @click="volverAEditar">Volver a editar</button>
+                <button @click="confirmarEnvio">Confirmar y enviar a revisión</button>
+            </div>
+
+            <div v-show="showEventSaved">
+                <img src="../img/evento_guardado.jpg" alt="evento guardado">
+            </div>
+
+            <div v-if="lightboxSrc" class="lightbox" @click="closeLightbox">
+                <img :src="lightboxSrc" alt="cartel ampliado">
+            </div>
+        </main>
+    </div>
+
+    <script src="../lib/vue.global.js"></script>
+    <script src="../js/eventos.js"></script>
+</body>
+</html>

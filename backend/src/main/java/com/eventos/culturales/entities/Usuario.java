@@ -11,9 +11,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -33,7 +34,11 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    private String roles;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "usuario_roles", joinColumns = @JoinColumn(name = "usuario_id"))
+    @Column(name = "rol", nullable = false)
+    @Builder.Default
+    private Set<String> roles = new HashSet<>();
 
     private Boolean enabled;
 
@@ -52,11 +57,9 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        for (String role : roles.split(",")) {
-            authorities.add(new SimpleGrantedAuthority(role));
-        }
-        return authorities;
+        return roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
     }
 
     @Override

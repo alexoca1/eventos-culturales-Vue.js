@@ -289,6 +289,16 @@ img {
     object-fit: contain;
 }
 
+/* Aviso de pendiente de revisión (organizador) */
+.aviso-revision {
+    margin: 1em 0;
+    padding: 1em;
+    background-color: #fff3cd;
+    border: 2px solid #ff9800;
+    border-radius: 5px;
+    color: #663c00;
+}
+
 /* Gestionar eventos: tarjeta compacta por evento */
 .gestionar {
     margin-top: 1em;
@@ -328,4 +338,36 @@ img {
     display: flex;
     gap: 0.5em;
     flex-shrink: 0;
+}
+
+/* Badge de estado (Mis eventos del organizador) */
+.badge {
+    display: inline-block;
+    margin-left: 0.5em;
+    padding: 0.1em 0.5em;
+    border-radius: 10px;
+    font-size: 0.8em;
+    font-weight: normal;
+    color: white;
+    background-color: #777;
+}
+
+.badge-pendiente_revision { background-color: #ff9800; }
+.badge-aprobado { background-color: #4caf50; }
+.badge-rechazado { background-color: #f44336; }
+.badge-pendiente_eliminacion { background-color: #9c27b0; }
+
+/* Badges de rol (Gestión de usuarios) */
+.badge-rol-admin { background-color: #d32f2f; }
+.badge-rol-organizador { background-color: #1976d2; }
+.badge-rol-user { background-color: #616161; }
+
+/* Icono de favorito en tarjetas */
+.fav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4em;
+    color: #e6a817;
+    padding: 0 0.2em;
 }

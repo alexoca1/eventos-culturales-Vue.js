@@ -1,5 +1,6 @@
 package com.eventos.culturales.config;
 
+import com.eventos.culturales.entities.CategoriaEvento;
 import com.eventos.culturales.entities.Evento;
 import com.eventos.culturales.entities.Usuario;
 import com.eventos.culturales.repositories.EventoRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class DataInitializer {
@@ -42,40 +44,59 @@ public class DataInitializer {
             admin.setPassword(passwordEncoder.encode(adminSeedPassword));
             admin.setNombre("Admin");
             admin.setApellidos("Sistema");
-            admin.setRoles("ROLE_ADMIN");
+            admin.setRoles(Set.of("ROLE_ADMIN"));
             admin.setEnabled(true);
             admin.setTelefono("600123123");
             usuarioRepository.save(admin);
             System.out.println("[DataInitializer] Admin user created: " + adminEmail);
-        } else if (adminExistente.get().getTelefono() == null || adminExistente.get().getTelefono().isBlank()) {
+        } else {
             Usuario admin = adminExistente.get();
-            admin.setTelefono("600123123");
-            usuarioRepository.save(admin);
+            boolean cambiado = false;
+            if (adminExistente.get().getTelefono() == null || adminExistente.get().getTelefono().isBlank()) {
+                admin.setTelefono("600123123");
+                cambiado = true;
+            }
+            // Migración US3: el admin anterior guardaba roles en columna String;
+            // ahora van en la tabla usuario_roles (@ElementCollection)
+            if (admin.getRoles() == null || admin.getRoles().isEmpty()) {
+                admin.setRoles(Set.of("ROLE_ADMIN"));
+                cambiado = true;
+            }
+            if (cambiado) {
+                usuarioRepository.save(admin);
+            }
         }
         seedEventos();
     }
 
     // Los 5 eventos de ejemplo del frontend; solo si la tabla está vacía.
     // El cartel se guarda en BD (imagen del classpath) para que todo funcione igual en producción.
+    // 007: nacen APROBADO y con creadoPor = admin semilla.
     private void seedEventos() {
+        Usuario admin = usuarioRepository.findByEmail("admin@test.com").orElse(null);
         if (eventoRepository.count() == 0) {
-            eventoRepository.saveAll(List.of(
+            List<Evento> semillas = List.of(
                     evento("El mesoncito", "C. Aduana, 3, 13500 Puertollano, Ciudad Real",
-                            "2026-09-01", "Fiesta Mexicana", "imagen1.jpg",
+                            "2026-09-01", "Fiesta Mexicana", "imagen1.jpg", CategoriaEvento.INFANTIL,
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.351416594194!2d-4.11284152355524!3d38.68677135910375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf53e9f8d2b%3A0xeedf97f108f04ee2!2sBar%20El%20Mesoncito!5e0!3m2!1ses!2ses!4v1733933838752!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
                     evento("Restaurante HAVANA", "Paseo de San Gregorio, S/N, 13500 Puertollano, Ciudad Real",
-                            "2026-10-01", "Monologo Danni Robira", "imagen2.jpg",
+                            "2026-10-01", "Monologo Danni Robira", "imagen2.jpg", CategoriaEvento.TEATRO,
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.274502406314!2d-4.109504855540716!3d38.6885383902203!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d951c6cd995%3A0x6023f1902f9b8560!2sRestaurante%20HAVANA!5e0!3m2!1ses!2ses!4v1733933986816!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
                     evento("Restaurante Asiático NAKAMA", "C. Vía Crucis, 19, 13500 Puertollano, Ciudad Real",
-                            "2026-11-01", "Exhibición de tapas vegetarianas", "imagen3.jpg",
+                            "2026-11-01", "Exhibición de tapas vegetarianas", "imagen3.jpg", CategoriaEvento.OTROS,
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.4604849300454!2d-4.112005365112297!3d38.684265499999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d274653c52b%3A0x586b94b2d3ae47f3!2sRestaurante%20Asi%C3%A1tico%20NAKAMA!5e0!3m2!1ses!2ses!4v1733934626820!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
                     evento("Auditorio Municipal", "Pl. Mariana Pineda, 0, 13500 Puertollano, Ciudad Real",
-                            "2026-12-01", "Rock la Mancha Festival", "imagen4.jpg",
+                            "2026-12-01", "Rock la Mancha Festival", "imagen4.jpg", CategoriaEvento.MUSICA,
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.1514033241547!2d-4.109704738305717!3d38.69136633423611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf6636e3549%3A0x4b13ec5f916e923c!2sAuditorio%20Municipal!5e0!3m2!1ses!2ses!4v1733934475151!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
                     evento("Museo Cristina García Rodero", "Pl. Constitución, s/n, 13500 Puertollano, Ciudad Real",
-                            "2027-01-01", "Exposición de Arte", "imagen5.jpg",
+                            "2027-01-01", "Exposición de Arte", "imagen5.jpg", CategoriaEvento.EXPOSICION,
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d389.2939734827675!2d-4.1110539430529505!3d38.68676282940689!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8c5ff5e8e3b3%3A0x5dbac4a9911589ec!2sMuseo%20Cristina%20Garc%C3%ADa%20Rodero!5e0!3m2!1ses!2ses!4v1733934734205!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>")
-            ));
+            );
+            for (Evento e : semillas) {
+                e.setEstado(com.eventos.culturales.entities.EstadoEvento.APROBADO);
+                e.setCreadoPor(admin);
+            }
+            eventoRepository.saveAll(semillas);
             System.out.println("[DataInitializer] 5 eventos de ejemplo creados");
         }
         backfillCarteles();
@@ -84,8 +105,23 @@ public class DataInitializer {
     // Migración: eventos con cartel pero sin HD, o con cartelUrl "../img/..." antigua.
     // HD = imagen completa, display = reescalado a 400px. Idempotente.
     private void backfillCarteles() {
+        Usuario admin = usuarioRepository.findByEmail("admin@test.com").orElse(null);
         for (Evento e : eventoRepository.findAll()) {
             boolean cambiado = false;
+            // 007: filas anteriores al flujo de aprobación = APROBADO del admin (siguen públicas)
+            if (e.getEstado() == null) {
+                e.setEstado(com.eventos.culturales.entities.EstadoEvento.APROBADO);
+                cambiado = true;
+            }
+            if (e.getCreadoPor() == null && admin != null) {
+                e.setCreadoPor(admin);
+                cambiado = true;
+            }
+            if (e.getFechaFin() == null) {
+                // 006: filas anteriores a fechaFin real = un día
+                e.setFechaFin(e.getFecha());
+                cambiado = true;
+            }
             if (e.getCartel() == null && e.getCartelUrl() != null) {
                 String nombre = e.getCartelUrl().substring(e.getCartelUrl().lastIndexOf('/') + 1);
                 byte[] bytes = leerImagen(nombre);
@@ -118,12 +154,13 @@ public class DataInitializer {
     }
 
     private static Evento evento(String establecimiento, String direccion, String fecha,
-                                 String descripcion, String imagen, String mapaEmbed) {
+                                 String descripcion, String imagen, CategoriaEvento categoria, String mapaEmbed) {
         Evento e = new Evento();
         e.setEstablecimiento(establecimiento);
         e.setDireccion(direccion);
         e.setFecha(LocalDate.parse(fecha));
         e.setDescripcion(descripcion);
+        e.setCategoria(categoria);
         byte[] original = leerImagen(imagen);
         e.setCartelHd(original);
         e.setCartelHdContentType("image/jpeg");

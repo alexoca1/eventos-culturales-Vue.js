@@ -14,11 +14,22 @@
         <main>
             <div class="control_acceso">
                 <button class="invitado-button" onclick="location.href='views/usuarioEstandar.html'">Ingresar como invitado</button>
-                <form @submit.prevent="validateAdmin" class="admin-form">
-                    <label for="username">Administrador (email)</label>
+                <form @submit.prevent="validateAdmin" class="admin-form" v-if="!showRegister">
+                    <label for="username">Entrar (email)</label>
                     <input type="text" v-model="username" placeholder="Email">
                     <input type="password" v-model="password" placeholder="Contraseña">
                     <button type="submit" class="admin-button">Ingresar</button>
+                    <p><a href="#" @click.prevent="showRegister = true">¿No tienes cuenta? Regístrate</a></p>
+                </form>
+                <form @submit.prevent="register" class="admin-form" v-else>
+                    <label>Crear cuenta</label>
+                    <input type="email" v-model="regEmail" placeholder="Email" required>
+                    <input type="password" v-model="regPassword" placeholder="Contraseña (mín. 6)" required minlength="6">
+                    <input type="text" v-model="regNombre" placeholder="Nombre" required>
+                    <input type="text" v-model="regApellidos" placeholder="Apellidos" required>
+                    <button type="submit" class="admin-button">Crear cuenta</button>
+                    <p v-if="regError" style="color: red;">{{regError}}</p>
+                    <p><a href="#" @click.prevent="showRegister = false">¿Ya tienes cuenta? Ingresa</a></p>
                 </form>
             </div>
             <div v-show="showCover">

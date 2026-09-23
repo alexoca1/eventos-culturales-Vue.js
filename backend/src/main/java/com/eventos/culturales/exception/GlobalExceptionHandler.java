@@ -46,11 +46,20 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Parámetro '" + ex.getName() + "' con formato inválido"));
     }
 
-    // Manejo de excepciones no controladas. Para desarrollo. En producción mostraríamos un mensaje de error genérico.
+    // JSON malformado o valor fuera de lista fija (ej: categoria inexistente) → 400, no 500
+    // (este handler tiene prioridad sobre el genérico Exception.class)
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+                .body(Map.of("error", "Cuerpo de la petición inválido (revisa enums, fechas y horas)"));
+    }
+
+    // Manejo de excepciones no controladas: al cliente SIEMPRE mensaje genérico;
+    // el detalle completo queda solo en el log del servidor (US2 hardening).
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception ex) {
         ex.printStackTrace();   //Para ver toda la traza del error en la consola
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("Error", ex.toString()));
+                .body(Map.of("error", "Error interno del servidor"));
     }
 }

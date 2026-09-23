@@ -1,5 +1,6 @@
 package com.eventos.culturales.controller;
 
+import com.eventos.culturales.dto.ActualizarUsuarioRequest;
 import com.eventos.culturales.dto.LoginRequest;
 import com.eventos.culturales.dto.RegisterRequest;
 import com.eventos.culturales.entities.RefreshToken;
@@ -26,6 +27,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -38,6 +40,9 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final boolean cookieSecure;
     private final String cookieSameSite;
+
+    private static final java.util.Set<String> ROLES_VALIDOS =
+            java.util.Set.of("ROLE_USER", "ROLE_ORGANIZADOR", "ROLE_ADMIN");
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -188,7 +193,7 @@ public class AuthController {
             usuario.setPassword(passwordEncoder.encode(registerRequest.password()));
             usuario.setNombre(registerRequest.nombre());
             usuario.setApellidos(registerRequest.apellidos());
-            usuario.setRoles("ROLE_USER");
+            usuario.setRoles(Set.of("ROLE_USER"));
             usuario.setEnabled(true);
             usuario.setTelefono(registerRequest.telefono());
 
@@ -218,7 +223,7 @@ public class AuthController {
             usuario.setPassword(passwordEncoder.encode(registerRequest.password()));
             usuario.setNombre(registerRequest.nombre());
             usuario.setApellidos(registerRequest.apellidos());
-            usuario.setRoles("ROLE_ADMIN");
+            usuario.setRoles(Set.of("ROLE_ADMIN"));
             usuario.setEnabled(true);
             usuario.setTelefono(registerRequest.telefono());
 
@@ -257,6 +262,58 @@ public class AuthController {
         return ResponseEntity.ok(perfil);
     }
 
+    // Editar roles y estado de un usuario (solo ADMIN). La protección de
+    // auto-bloqueo (no desactivarse/quitarse ROLE_ADMIN a sí mismo) va en US3.
+    @PutMapping("/usuarios/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> actualizarUsuario(@PathVariable Long id,
+                                               @RequestBody ActualizarUsuarioRequest req,
+                                               Authentication authentication) {
+        var opt = usuarioRepository.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Usuario usuario = opt.get();
+        if (req.roles() != null) {
+            if (req.roles().isEmpty() || !ROLES_VALIDOS.containsAll(req.roles())) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "Roles inválidos: deben ser un conjunto no vacío de ROLE_USER, ROLE_ORGANIZADOR, ROLE_ADMIN"));
+            }
+        }
+        // US3: si el cambio te dejara a ti mismo sin ROLE_ADMIN o deshabilitado, 409 antes de guardar nada
+        java.util.Set<String> rolesFinales = req.roles() != null
+                ? req.roles() : usuario.getRoles();
+        Boolean enabledFinal = req.enabled() != null ? req.enabled() : usuario.getEnabled();
+        if (esUnoMismo(authentication, id)
+                && (!rolesFinales.contains("ROLE_ADMIN") || Boolean.FALSE.equals(enabledFinal))) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "No puedes desactivarte ni quitarte ROLE_ADMIN a ti mismo"));
+        }
+        if (req.roles() != null) {
+            usuario.setRoles(new java.util.HashSet<>(req.roles()));
+        }
+        if (req.enabled() != null) {
+            usuario.setEnabled(req.enabled());
+        }
+        usuarioRepository.save(usuario);
+
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("id", usuario.getId());
+        datos.put("email", usuario.getEmail());
+        datos.put("roles", usuario.getRoles());
+        datos.put("enabled", usuario.getEnabled());
+        return ResponseEntity.ok(datos);
+    }
+
+    private boolean esUnoMismo(Authentication authentication, Long id) {
+        if (authentication == null) return false;
+        org.springframework.security.oauth2.jwt.Jwt jwt =
+                (org.springframework.security.oauth2.jwt.Jwt) authentication.getPrincipal();
+        return usuarioRepository.findByEmail(jwt.getSubject())
+                .map(u -> u.getId().equals(id))
+                .orElse(false);
+    }
+
     // Lista todos los usuarios registrados (solo ADMIN)
     @GetMapping("/usuarios")
     @PreAuthorize("hasRole('ADMIN')")
@@ -270,6 +327,7 @@ public class AuthController {
                     datos.put("apellidos", u.getApellidos());
                     datos.put("roles", u.getRoles());
                     datos.put("telefono", u.getTelefono());
+                    datos.put("enabled", u.getEnabled());
                     return datos;
                 })
                 .collect(Collectors.toList());

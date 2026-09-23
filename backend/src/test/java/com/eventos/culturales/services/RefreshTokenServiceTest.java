@@ -13,6 +13,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,7 +29,7 @@ class RefreshTokenServiceTest {
     private RefreshTokenService refreshTokenService;
 
     private Usuario usuario() {
-        return Usuario.builder().id(1L).email("admin@test.com").roles("ROLE_ADMIN").enabled(true).build();
+        return Usuario.builder().id(1L).email("admin@test.com").roles(Set.of("ROLE_ADMIN")).enabled(true).build();
     }
 
     private RefreshToken tokenValido(Usuario u) {

@@ -17,6 +17,22 @@
                     <label for="">Buscar eventos por fecha</label>
                     <input type="date" @change="searchEvent()" v-model="searchDate">
                 </div>
+                <div class="fecha">
+                    <label for="">Filtrar por categoría</label>
+                    <select @change="searchEvent()" v-model="searchCategoria">
+                        <option value="">Todas</option>
+                        <option value="MUSICA">Música</option>
+                        <option value="TEATRO">Teatro</option>
+                        <option value="EXPOSICION">Exposición</option>
+                        <option value="CINE">Cine</option>
+                        <option value="LITERATURA">Literatura</option>
+                        <option value="INFANTIL">Infantil</option>
+                        <option value="OTROS">Otra</option>
+                    </select>
+                </div>
+                <button v-if="tieneSesion()" @click="verFavoritos()">Mis favoritos</button>
+                <button v-if="tieneSesion()" @click="volverBuscar()">Buscar eventos</button>
+                <button v-if="tieneSesion()" @click="logout()">Cerrar sesión</button>
             </div>
 
             <div v-show="showCover">
@@ -27,11 +43,15 @@
 
             <div class="mostrar_evento" v-show="showEvent" v-for="ev in dayEvents" :key="ev.id">
                 <div class="cartel">
-                    <p>Cartel (clic para ampliar)</p>
+                    <p>Cartel (clic para ampliar)
+                        <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "★" : "☆" }}</button>
+                    </p>
                     <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
                 </div>
                 <div class="datos_eventos">
                     <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                    <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                    <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
                     <p>Establecimiento: <br>{{ev.establishment}}</p>
                     <p>Domicilio: <br>{{ev.address}}</p>
                     <p>Evento principal: <br>{{ev.content}}</p>
@@ -44,6 +64,34 @@
 
             <div v-show="showNoEvent">
                 <img src="../img/no_hay_eventos.jpg" alt="no hay evento">
+            </div>
+
+            <div v-show="showFavoritos">
+                <h2>Mis favoritos</h2>
+                <div class="mostrar_evento" v-for="ev in favoritosEventos" :key="ev.id">
+                    <div class="cartel">
+                        <p>Cartel (clic para ampliar)
+                            <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "★" : "☆" }}</button>
+                        </p>
+                        <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                    </div>
+                    <div class="datos_eventos">
+                        <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                        <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                        <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
+                        <p>Establecimiento: <br>{{ev.establishment}}</p>
+                        <p>Domicilio: <br>{{ev.address}}</p>
+                        <p>Evento principal: <br>{{ev.content}}</p>
+                    </div>
+                    <div class="mapa">
+                        <p>Ubicación</p>
+                        <div v-html="ev.map"></div>
+                    </div>
+                </div>
+                <div v-show="favoritosEventos.length === 0">
+                    <img src="../img/no_hay_eventos.jpg" alt="sin favoritos">
+                    <p>Todavía no tienes favoritos. Marca la estrella ☆ en cualquier evento.</p>
+                </div>
             </div>
 
             <div v-if="lightboxSrc" class="lightbox" @click="closeLightbox">
