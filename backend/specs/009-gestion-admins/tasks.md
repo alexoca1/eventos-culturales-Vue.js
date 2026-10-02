@@ -33,6 +33,10 @@
 - [x] T110 Actualizar `docs/api-contract.md`: `PUT /auth/usuarios/{id}` y el campo `enabled` en `GET /auth/usuarios`
 - [x] T111 `./mvnw test` completo en verde (suite `001` a `009`)
 
+## Phase 5: Rol único (punto 1 de mejoras)
+- [x] T112 [US2] Validación "exactamente un rol" en `actualizarUsuario`: `req.roles().size() != 1` → 400 (el contrato `roles` array-de-1 no cambia)
+- [x] T113 [US2/US3] Tests: `actualizarUsuario_variosRoles_400` nuevo; `actualizarUsuario_propioSinRiesgo_200` adaptado (conservar el propio rol en vez de añadir otro)
+
 ## Dependencies & Execution Order
 US1 → US2 → US3 (US3 depende de que el endpoint de US2 ya exista para poder protegerlo). T110-T111 al final.
 

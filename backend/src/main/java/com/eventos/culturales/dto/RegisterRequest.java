@@ -18,4 +18,5 @@ public record RegisterRequest(@NotBlank(message = "El email es obligatorio")
                                @NotBlank(message = "Los apellidos son obligatorios")
                                String apellidos,
 
+                               @NotBlank(message = "El teléfono es obligatorio")
                                String telefono) {}

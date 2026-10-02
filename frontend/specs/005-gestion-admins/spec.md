@@ -16,12 +16,12 @@ Nueva sección "Gestión de usuarios" en `administrador.html` que lista todos lo
 
 ---
 
-### User Story 2 - Ascender un usuario a Organizador (Priority: P1)
-El admin puede cambiar los roles de un usuario desde la propia lista.
+### User Story 2 - Cambiar el rol de un usuario (Priority: P1)
+El admin puede cambiar el rol (único) de un usuario desde la propia lista, con radiobuttons.
 
 **Acceptance Scenarios**:
-1. **Given** un usuario con `ROLE_USER`, **When** el admin pulsa "Editar" y marca `ROLE_ORGANIZADOR`, **Then** se llama a `PUT /auth/usuarios/{id}` con los roles seleccionados y la lista se actualiza.
-2. **Given** el backend rechaza el cambio (ej. `roles` vacío), **When** ocurre, **Then** se muestra el mensaje de error sin cerrar el formulario de edición.
+1. **Given** un usuario con `ROLE_USER`, **When** el admin pulsa "Editar" y marca el radio `ROLE_ORGANIZADOR`, **Then** se llama a `PUT /auth/usuarios/{id}` con `roles=["ROLE_ORGANIZADOR"]` y la lista se actualiza.
+2. **Given** el backend rechaza el cambio (ej. sin rol seleccionado), **When** ocurre, **Then** se muestra el mensaje de error sin cerrar el formulario de edición.
 
 ---
 
@@ -44,14 +44,14 @@ Reutiliza el endpoint ya existente `POST /auth/usuarios-admin` con un formulario
 
 ### Edge Cases
 - El propio usuario admin logueado MUST verse en la lista pero con las acciones de desactivar/quitar-admin deshabilitadas en la UI (evita que el admin intente algo que el backend igualmente rechazaría con 409 — mejor feedback inmediato que esperar el error).
-- Los roles se muestran como checkboxes (`ROLE_USER`, `ROLE_ORGANIZADOR`, `ROLE_ADMIN`), coherente con que un usuario puede tener más de uno.
+- Los roles se eligen con radiobuttons (`ROLE_USER`, `ROLE_ORGANIZADOR`, `ROLE_ADMIN`, mismo `name`): un usuario solo puede tener un único rol. Al abrir la edición se preselecciona el rol actual (el primero si hubiera varios legacy).
 
 ## Requirements
 
 ### Functional Requirements
 - **FR-001**: `administrador.html` MUST incluir una sección "Gestión de usuarios" con la lista de `GET /auth/usuarios`.
 - **FR-002**: Cada usuario de la lista MUST mostrar email, roles (badges) y estado (Activo/Desactivado).
-- **FR-003**: El admin MUST poder editar los roles de cualquier usuario (excepto los suyos propios) mediante `PUT /auth/usuarios/{id}`.
+- **FR-003**: El admin MUST poder cambiar el rol (único) de cualquier usuario (excepto el suyo propio) mediante `PUT /auth/usuarios/{id}` con `roles` de exactamente 1 elemento.
 - **FR-004**: El admin MUST poder activar/desactivar cualquier cuenta (excepto la suya propia) con confirmación previa.
 - **FR-005**: La UI MUST deshabilitar (no solo depender del backend) las acciones de auto-desactivación/auto-quitar-admin sobre la fila del propio usuario logueado.
 - **FR-006**: MUST existir un formulario para crear un nuevo admin, reutilizando `POST /auth/usuarios-admin` sin cambios en ese endpoint.

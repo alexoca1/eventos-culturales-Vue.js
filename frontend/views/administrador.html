@@ -1,51 +1,78 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Administrador de Eventos</title>
+    <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/eventos.css">
 </head>
 <body>
-    <div id="eventos">
-        <header>
-            <h1>Página de Eventos Culturales en Puertollano</h1>
+    <div id="eventos" v-cloak>
+        <header class="header-bar">
+            <h1><a class="titulo-inicio" href="../index.html" @click.prevent="irAInicio()">PÃ¡gina de Eventos Culturales en Puertollano</a></h1>
+            <template v-if="!arrancando">
+                <div class="sesion" v-if="tieneSesion()">
+                    <button @click="alternarMenu()">{{sesionNombre || 'Mi cuenta'}}</button>
+                    <div v-show="menuAbierto" class="menu-sesion">
+                        <button @click="irAPanel()">Mi panel</button>
+                        <button @click="irAPerfil()">Editar mis datos</button>
+                        <button @click="logout()">Cerrar sesiÃ³n</button>
+                    </div>
+                </div>
+                <a v-else class="sesion-entrar" href="../index.html">Ingresar</a>
+            </template>
         </header>
 
-        <main>
+        <main v-show="!arrancando">
             <div class="control">
                 <div class="fecha">
                     <label for="">Buscar eventos por fecha</label>
-                    <input type="date" @change="searchEvent()" v-model="searchDate">
+                    <input type="date" @change="filtrar()" v-model="searchDate">
                 </div>
                 <div class="fecha">
-                    <label for="">Filtrar por categoría</label>
-                    <select @change="searchEvent()" v-model="searchCategoria">
-                        <option value="">Todas</option>
-                        <option value="MUSICA">Música</option>
-                        <option value="TEATRO">Teatro</option>
-                        <option value="EXPOSICION">Exposición</option>
-                        <option value="CINE">Cine</option>
-                        <option value="LITERATURA">Literatura</option>
-                        <option value="INFANTIL">Infantil</option>
-                        <option value="OTROS">Otra</option>
-                    </select>
+                    <label for="">Filtrar por etiquetas</label>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id">
+                        <input type="checkbox" :value="t.nombre" v-model="searchEtiquetas" @change="filtrar()"> {{t.nombre}}
+                    </label>
                 </div>
+                <div class="buscador-texto">
+                    <label>🔍 Buscar por nombre o lugar</label>
+                    <div style="display:flex; gap:var(--space-sm)">
+                        <input type="text" v-model="searchText"
+                               placeholder="Ej: Teatro Municipal, Jazz..."
+                               minlength="2" maxlength="100"
+                               @keyup.enter="buscarPorTexto()">
+                        <button type="button" @click="buscarPorTexto()">Buscar</button>
+                    </div>
+                    <small v-if="errBusqueda" style="color:var(--color-estado-rechazado)">
+                        {{errBusqueda}}</small>
+                </div>
+            </div>
+            <div class="acciones">
                 <button @click="addEvent()">Agregar evento nuevo</button>
                 <button @click="manageEvents()">Gestionar eventos</button>
-                <button @click="cargarPendientes()">Pendientes de revisión</button>
-                <button @click="cargarUsuarios()">Gestión de usuarios</button>
+                <button @click="cargarPendientes()">Pendientes de revisiÃ³n</button>
+                <button @click="cargarUsuarios()">GestiÃ³n de usuarios</button>
+                <button @click="gestionarEtiquetas()">Etiquetas</button>
+                <button @click="verCartelera()">Ver cartelera pÃºblica</button>
             </div>
 
             <div v-show="showCover">
                 <img src="../img/evento_portada.jpg" alt="portada">
             </div>
 
-            <h2 v-show="showEvent">Eventos para el día {{formatDate(date)}}</h2>
+            <h2 v-show="showEvent">Eventos para el dÃ­a {{formatDate(date)}}</h2>
 
             <div class="mostrar_evento" v-show="showEvent" v-for="ev in dayEvents" :key="ev.id">
                 <div class="cartel">
                     <p>Cartel (clic para ampliar)</p>
                     <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                </div>
+                <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
+                    <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
+                        @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
+                        :alt="'Foto ' + (o + 1) + ' del evento'" style="max-height: 60px; cursor: zoom-in;">
                 </div>
                 <div class="datos_eventos">
                     <p>Fecha: <br>{{formatDate(ev.date)}}</p>
@@ -54,9 +81,15 @@
                     <p>Establecimiento: <br>{{ev.establishment}}</p>
                     <p>Domicilio: <br>{{ev.address}}</p>
                     <p>Evento principal: <br>{{ev.content}}</p>
+                    <p v-if="ev.etiquetas && ev.etiquetas.length">Etiquetas: <br>{{ev.etiquetas.join(", ")}}</p>
+                        <p v-if="ev.telefono">📞 <a :href="telHref(ev.telefono)">{{ev.telefono}}</a></p>
+                        <p v-if="ev.urlEvento">🔗 <a :href="ev.urlEvento" target="_blank" rel="noopener">Más información</a></p>
+                        <div v-if="ev.redes && ev.redes.length" class="redes-evento">
+                            <a v-for="r in ev.redes" :key="r.red" :href="r.url" target="_blank" rel="noopener" :title="r.red" class="red-evento-link">{{textoRed(r.red)}}</a>
+                        </div>
                 </div>
                 <div class="mapa">
-                    <p>Ubicación</p>
+                    <p>UbicaciÃ³n</p>
                     <div v-html="ev.map"></div>
                 </div>
             </div>
@@ -70,7 +103,7 @@
             </div>
 
             <div v-if="lightboxSrc" class="lightbox" @click="closeLightbox">
-                <img :src="lightboxSrc" alt="cartel ampliado">
+                <img :src="lightboxSrc" :alt="lightboxAlt" @error="onLightboxError">
             </div>
 
             <div class="mostrar_ingresar" v-show="showForm">
@@ -78,10 +111,11 @@
                 <form @submit.prevent="submitForm">
                     <div class="fecha">
                         <label>Ingresar Fecha</label>
-                        <input type="date" v-model="inputDate" style="width: 120px;"><br>
+                        <input type="date" id="f-fecha" v-model="inputDate" style="width: 120px;">
+                        <p v-if="errDate" style="color: red;">{{errDate}}</p><br>
                     </div>
                     <div class="fecha">
-                        <label>Fecha fin (opcional, vacío = un día)</label>
+                        <label>Fecha fin (opcional, vacÃ­o = un dÃ­a)</label>
                         <input type="date" v-model="inputFechaFin" style="width: 120px;"><br>
                     </div>
                     <div class="fecha">
@@ -91,30 +125,63 @@
                         <input type="time" v-model="inputHoraFin" style="width: 110px;"><br>
                     </div>
                     <label>Ingresar Establecimiento</label>
-                    <input type="text" v-model="inputEstablishment"><br>
+                    <input type="text" id="f-establecimiento" v-model="inputEstablishment">
+                    <p v-if="errEstablishment" style="color: red;">{{errEstablishment}}</p><br>
                     <label>Ingresar Domicilio</label>
-                    <input type="text" v-model="inputAddress"><br>
-                    <label>Ingresar Evento Principal</label>
-                    <input type="text" v-model="inputContent"><br>
-                    <label>Categoría (opcional)</label>
-                    <select v-model="inputCategoria">
-                        <option value="">Sin categoría</option>
-                        <option value="MUSICA">Música</option>
-                        <option value="TEATRO">Teatro</option>
-                        <option value="EXPOSICION">Exposición</option>
-                        <option value="CINE">Cine</option>
-                        <option value="LITERATURA">Literatura</option>
-                        <option value="INFANTIL">Infantil</option>
-                        <option value="OTROS">Otra</option>
-                    </select><br>
-                    <label>Ingresar Cartel</label>
+                    <input type="text" id="f-direccion" v-model="inputAddress">
+                    <p v-if="errAddress" style="color: red;">{{errAddress}}</p><br>
+                    <label>Nombre del evento *</label>
+                    <input type="text" id="f-nombre" v-model="inputNombre">
+                    <p v-if="errNombre" style="color: red;">{{errNombre}}</p><br>
+                    <label>DescripciÃ³n del evento (opcional)</label>
+                    <textarea id="f-descripcion" v-model="inputDescripcion" rows="4" style="width: 100%"
+                        placeholder="CuÃ©ntanos con mÃ¡s detalle de quÃ© va el evento"></textarea><br>
+                    <label>Etiquetas (sin marcar = Otra)</label>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id">
+                        <input type="checkbox" :value="t.nombre" v-model="inputEtiquetas"> {{t.nombre}}
+                    </label><br>
+                    <label>Ingresar Cartel {{ editingId ? "(opcional: se conserva el actual)" : "(obligatorio)" }}</label>
                     <div class="file-input-wrapper">
                         <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/webp" style="display:none;">
                         <button type="button" onclick="document.getElementById('fileInput').click()">Elegir archivo</button>
-                    </div><br>
+                    </div>
+                    <p v-if="errCartel" style="color: red;">{{errCartel}}</p><br>
                     <div v-html="inputPoster" v-if="inputPoster"></div>
+                    <label>GalerÃ­a de fotos (opcional, hasta 5)</label>
+                    <p class="nota">Cada hueco es una foto. Si editas un evento, quitar una foto la borra al guardar.</p>
+                    <div class="galeria-slots">
+                        <div class="galeria-slot" v-for="orden in galeriaSlots" :key="orden"
+             :class="{ 'galeria-slot-borrar': slotPendienteBorrar(orden) }">
+                            <span class="galeria-slot-num">Foto {{ orden + 1 }}</span>
+                            <input type="file" accept="image/jpeg, image/png, image/webp" @change="elegirFotoGaleria(orden, $event)">
+                            <img v-if="slotOcupado(orden)" :src="slotPreview(orden)" class="galeria-slot-preview"
+                                alt="Miniatura de la foto {{ orden + 1 }}">
+                            <button type="button" class="galeria-slot-quitar" v-if="slotOcupado(orden)"
+                                @click="quitarFotoGaleria(orden)" :aria-label="'Quitar la foto ' + (orden + 1)">Ã—</button>
+                        </div>
+                    </div><br>
+                    <label>Teléfono de contacto (opcional)</label>
+                    <input type="tel" v-model="inputTelefono" placeholder="+34 600 000 000">
+                    <label>Enlace del evento (opcional)</label>
+                    <input type="url" v-model="inputUrlEvento" placeholder="https://...">
+                    <label>Redes sociales del evento (opcional)</label>
+                    <button type="button" @click="añadirRed()" :disabled="inputRedes.length >= 8">Añadir red social</button>
+                    <div class="red-social-row" v-for="(r, i) in inputRedes" :key="i">
+                        <select v-model="r.red">
+                            <option value="FACEBOOK">Facebook</option>
+                            <option value="INSTAGRAM">Instagram</option>
+                            <option value="X">X (Twitter)</option>
+                            <option value="YOUTUBE">YouTube</option>
+                            <option value="TIKTOK">TikTok</option>
+                            <option value="LINKEDIN">LinkedIn</option>
+                            <option value="WHATSAPP">WhatsApp</option>
+                            <option value="TELEGRAM">Telegram</option>
+                        </select>
+                        <input type="url" v-model="r.url" placeholder="https://...">
+                        <button type="button" @click="quitarRed(i)">×</button>
+                    </div><br>
                     <label>Ingresar Mapa</label>
-                    <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
+                    <textarea v-model="inputMap" placeholder="Pega aquÃ­ el cÃ³digo iframe de Google Maps" rows="4" style="width: 100%"></textarea>
                     <button type="submit">{{ editingId ? "Guardar cambios" : "Guardar Evento" }}</button>
                     <button type="button" @click="cancelForm">Cancelar</button>
                 </form>
@@ -122,11 +189,17 @@
 
             <div class="gestionar" v-show="showManage">
                 <h3>Gestionar eventos</h3>
-                <div class="evento-row" v-for="event in events" :key="event.id">
+                <button @click="mostrarAnteriores = !mostrarAnteriores">{{mostrarAnteriores ? "Solo prÃ³ximos" : "Ver eventos anteriores"}}</button>
+                <div style="margin-bottom:var(--space-sm)">
+                    <input type="text" v-model="filtroTexto"
+                           placeholder="Filtrar por nombre o lugar..."
+                           style="width:100%; max-width:400px">
+                </div>
+                <div class="evento-row" v-for="event in eventosGestion" :key="event.id">
                     <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
                     <div class="evento-info">
-                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong><br>
-                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
+                        <strong>{{formatDate(event.date)}} â€” {{event.establishment}}</strong><br>
+                        {{event.content}}<span v-if="event.horaInicio"> Â· {{formatHorario(event)}}</span><span v-if="formatRango(event)"> Â· {{formatRango(event)}}</span>
                     </div>
                     <div class="evento-acciones">
                         <button @click="editEvento(event)">Editar</button>
@@ -136,14 +209,14 @@
             </div>
 
             <div class="gestionar" v-show="showPendientes">
-                <h3>Pendientes de revisión</h3>
+                <h3>Pendientes de revisiÃ³n</h3>
                 <p v-if="pendientes.length === 0">No hay solicitudes pendientes.</p>
                 <div class="evento-row" v-for="event in pendientes" :key="event.id">
                     <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
                     <div class="evento-info">
-                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong>
+                        <strong>{{formatDate(event.date)}} â€” {{event.establishment}}</strong>
                         <span class="badge" :class="'badge-' + (event.estado || '').toLowerCase()">{{tipoSolicitud(event.estado)}}</span><br>
-                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
+                        {{event.content}}<span v-if="event.horaInicio"> Â· {{formatHorario(event)}}</span><span v-if="formatRango(event)"> Â· {{formatRango(event)}}</span>
                         <br><small>De: {{event.creadoPor || "?"}}</small>
                     </div>
                     <div class="evento-acciones">
@@ -160,13 +233,14 @@
             </div>
 
             <div class="gestionar" v-show="showUsuarios">
-                <h3>Gestión de usuarios</h3>
+                <h3>GestiÃ³n de usuarios</h3>
                 <form @submit.prevent="crearAdmin">
                     <h4>Crear admin</h4>
                     <input type="email" v-model="nuevoAdminEmail" placeholder="Email" required>
-                    <input type="password" v-model="nuevoAdminPassword" placeholder="Contraseña (mín. 6)" required minlength="6">
+                    <input type="password" v-model="nuevoAdminPassword" placeholder="ContraseÃ±a (mÃ­n. 6)" required minlength="6">
                     <input type="text" v-model="nuevoAdminNombre" placeholder="Nombre" required>
                     <input type="text" v-model="nuevoAdminApellidos" placeholder="Apellidos" required>
+                    <input type="tel" v-model="nuevoAdminTelefono" placeholder="TelÃ©fono (obligatorio)" required>
                     <button type="submit">Crear admin</button>
                     <p v-if="crearAdminError" style="color: red;">{{crearAdminError}}</p>
                 </form>
@@ -178,10 +252,20 @@
                         <span class="badge" :class="u.enabled ? 'badge-aprobado' : 'badge-rechazado'">{{u.enabled ? "Activo" : "Desactivado"}}</span><br>
                         <small>{{u.nombre}} {{u.apellidos}}</small>
                         <div v-if="editandoUsuarioId === u.id">
-                            <label><input type="checkbox" value="ROLE_USER" v-model="editRoles"> Usuario</label>
-                            <label><input type="checkbox" value="ROLE_ORGANIZADOR" v-model="editRoles"> Organizador</label>
-                            <label><input type="checkbox" value="ROLE_ADMIN" v-model="editRoles" :disabled="esUnoMismo(u)"> Admin</label>
-                            <button @click="editarRolesUsuario(u)">Guardar roles</button>
+                            <label><input type="radio" name="rol" value="ROLE_USER" v-model="editRole"> Usuario</label>
+                            <label><input type="radio" name="rol" value="ROLE_ORGANIZADOR" v-model="editRole"> Organizador</label>
+                            <label><input type="radio" name="rol" value="ROLE_ADMIN" v-model="editRole" :disabled="esUnoMismo(u)"> Admin</label>
+                            <div v-if="editRole === 'ROLE_ORGANIZADOR'">
+                                <label>Nombre de la organizaciÃ³n (obligatorio)</label>
+                                <input type="text" v-model="editOrgNombre"><br>
+                                <label>Encargado: nombre (obligatorio)</label>
+                                <input type="text" v-model="editEncNombre"><br>
+                                <label>Encargado: telÃ©fono (obligatorio)</label>
+                                <input type="tel" v-model="editEncTelefono"><br>
+                                <label>Encargado: correo (obligatorio)</label>
+                                <input type="email" v-model="editEncEmail"><br>
+                            </div>
+                            <button @click="editarRolesUsuario(u)">Guardar rol</button>
                             <button @click="cancelarEditarRoles()">Cancelar</button>
                             <p v-if="editError" style="color: red;">{{editError}}</p>
                         </div>
@@ -192,10 +276,142 @@
                     </div>
                 </div>
             </div>
+
+            <div class="gestionar" v-show="showEtiquetas">
+                <h3>Etiquetas</h3>
+                <form @submit.prevent="crear">
+                    <h4>Crear etiqueta</h4>
+                    <input type="text" v-model="nuevaEtiquetaNombre" placeholder="Nombre (p. ej. JAZZ)" required>
+                    <button type="submit">Crear etiqueta</button>
+                    <p v-if="etiquetaError" style="color: red;">{{etiquetaError}}</p>
+                </form>
+                <p v-if="etiquetasDisponibles.length === 0">No hay etiquetas.</p>
+                <div class="evento-row" v-for="t in etiquetasDisponibles" :key="t.id">
+                    <div class="evento-info">
+                        <strong>{{t.nombre}}</strong>
+                        <div v-if="editandoEtiquetaId === t.id">
+                            <input type="text" v-model="editEtiquetaNombre">
+                            <button @click="confirmarRenombrar(t)">Guardar</button>
+                            <button @click="cancelarRenombrar()">Cancelar</button>
+                        </div>
+                    </div>
+                    <div class="evento-acciones">
+                        <button @click="empezarRenombrar(t)">Renombrar</button>
+                        <button @click="eliminar(t)">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showPerfil">
+                <h3>Mi perfil</h3>
+                <label>Nombre</label>
+                <input type="text" v-model="perfilNombre"><br>
+                <label>Apellidos</label>
+                <input type="text" v-model="perfilApellidos"><br>
+                <label>TelÃ©fono (obligatorio)</label>
+                <input type="tel" v-model="perfilTelefono"><br>
+                <button @click="guardarPerfil(false)">Guardar</button>
+                <button @click="cerrarPerfil()">Cerrar</button>
+                <p v-if="perfilError" style="color: red;">{{perfilError}}</p>
+                <p v-if="perfilOk" style="color: green;">Guardado.</p>
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showPanel">
+                <h3>Mi panel</h3>
+                <p>Hola, {{sesionNombre}}</p>
+                <p>Eventos: <strong>{{statTotal}}</strong>
+                    Â· Pendientes: <strong>{{statPendientes}}</strong>
+                    Â· Usuarios: <strong>{{statUsuarios}}</strong>
+                    Â· Etiquetas: <strong>{{statEtiquetas}}</strong></p>
+                <p>Cartelera pÃºblica: <a href="usuarioEstandar.html">Ver cartelera pÃºblica</a></p>
+                <button @click="addEvent()">Nuevo evento</button>
+                <button @click="manageEvents()">Gestionar</button>
+                <button @click="cargarPendientes()">Pendientes</button>
+                <button @click="cargarUsuarios()">Usuarios</button>
+                <button @click="gestionarEtiquetas()">Etiquetas</button>
+                <button @click="irAPerfil()">Editar mis datos</button>
+                <button @click="cerrarPanel()">Cerrar panel</button>
+            </div>
+            <div v-show="showProximos" id="lista-proximos">
+                <h2>PrÃ³ximos eventos (cartelera pÃºblica)</h2>
+                <p>Eventos aprobados y vigentes, ordenados por fecha.</p>
+                <button @click="showProximos = false">â† Volver al panel</button>
+                <div class="mostrar_evento" v-for="ev in proximosEventos" :key="ev.id">
+                    <div class="cartel">
+                        <p>Cartel (clic para ampliar)</p>
+                        <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                    </div>
+                    <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                    <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
+                        <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
+                            @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
+                            :alt="'Foto ' + (o + 1) + ' del evento'" style="max-height: 60px; cursor: zoom-in;">
+                    </div>
+                    <div class="datos_eventos">
+                        <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                        <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                        <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
+                        <p>Establecimiento: <br>{{ev.establishment}}</p>
+                        <p>Domicilio: <br>{{ev.address}}</p>
+                        <p>Evento principal: <br>{{ev.content}}</p>
+                        <p v-if="ev.etiquetas && ev.etiquetas.length">Etiquetas: <br>{{ev.etiquetas.join(", ")}}</p>
+                        <p v-if="ev.telefono">📞 <a :href="telHref(ev.telefono)">{{ev.telefono}}</a></p>
+                        <p v-if="ev.urlEvento">🔗 <a :href="ev.urlEvento" target="_blank" rel="noopener">Más información</a></p>
+                        <div v-if="ev.redes && ev.redes.length" class="redes-evento">
+                            <a v-for="r in ev.redes" :key="r.red" :href="r.url" target="_blank" rel="noopener" :title="r.red" class="red-evento-link">{{textoRed(r.red)}}</a>
+                        </div>
+                    </div>
+                    <div class="mapa">
+                        <p>UbicaciÃ³n</p>
+                        <div v-html="ev.map"></div>
+                    </div>
+                </div>
+                <div class="paginacion" v-show="paginaMeta.totalPages > 1">
+                    <button :disabled="paginaMeta.first" @click="paginaAnterior()">Anterior</button>
+                    <span>PÃ¡gina {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
+                    <button :disabled="paginaMeta.last" @click="paginaSiguiente()">Siguiente</button>
+                </div>
+            </div>
         </main>
+
+        <p v-show="arrancando" class="cargando" role="status">Cargandoâ€¦</p>
+
+        <footer class="footer">
+            <div class="footer-cols">
+                <div class="footer-col">
+                    <h3>AsociaciÃ³n Cultural Puertollano</h3>
+                    <p>Promoviendo la cultura y el arte<br>en nuestra ciudad desde 1985.</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Contacto</h3>
+                    <p>
+                        ðŸ“ Calle Mayor, 12 â€” 13500 Puertollano, Ciudad Real<br>
+                        ðŸ“ž <a href="tel:+34926123456">+34 926 123 456</a><br>
+                        âœ‰ï¸ <a href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h3>SÃ­guenos</h3>
+                    <div class="footer-social">
+                        <a href="#" target="_blank" rel="noopener" title="Facebook">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="Instagram">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="X (Twitter)">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="YouTube">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <p class="footer-copy">Â© 2024â€“2025 AsociaciÃ³n Cultural Puertollano Â· Todos los derechos reservados</p>
+        </footer>
     </div>
 
-    <script src="../lib/vue.global.js"></script>
-    <script src="../js/eventos.js"></script>
+    <script type="module" src="../js/pages/admin.js"></script>
 </body>
 </html>

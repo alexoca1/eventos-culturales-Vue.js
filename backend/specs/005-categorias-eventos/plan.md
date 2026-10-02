@@ -1,19 +1,21 @@
-# Implementation Plan: Categorías de Eventos — Eventos Culturales Puertollano
+# Implementation Plan: Etiquetas de Eventos — Eventos Culturales Puertollano
 
-**Branch**: `005-categorias-eventos` | **Date**: 2026-09-18 | **Spec**: `specs/005-categorias-eventos/spec.md`
+**Branch**: `005-categorias-eventos` | **Date**: 2026-09-18 (reescrito el 2026-09-24, punto 2: etiquetas múltiples con ruptura limpia) | **Spec**: `specs/005-categorias-eventos/spec.md`
+
+> Reescritura retrospectiva: el diseño original (enum `CategoriaEvento`, ya eliminado) queda superado por el real. Fuente de verdad: `spec.md` + `tasks.md` (fases 4-6) de esta carpeta.
 
 ## Summary
-Enum `CategoriaEvento` con 7 valores fijos, campo nullable en `Evento`, y extensión del `GET /eventos` existente (`fecha` opcional) para aceptar también `categoria` opcional, combinable.
+Entidad `Etiqueta` (catálogo gestionado por el admin) + `Evento.etiquetas` `@ManyToMany` EAGER (join `evento_etiquetas`) + `EtiquetaController` (GET público, mutaciones admin) + `GET /eventos?etiquetas=a,b` con coincidencia ANY + migración de la antigua `categoria` en `DataInitializer`.
 
 ## Technical Context
 **Language/Version**: Java 21, sin dependencias nuevas.
-**Storage**: nueva columna `categoria` (String, vía `@Enumerated(EnumType.STRING)` — nunca `ORDINAL`, para no romper datos si se reordena el enum en el futuro).
-**Testing**: JUnit 5 + MockMvc, mismo estilo que features previas.
+**Storage**: tablas `etiquetas` (nombre único) y `evento_etiquetas`; la columna legacy `categoria` se deja de mapear (ddl-auto=update no la borra, se ignora).
+**Testing**: JUnit 5 + MockMvc, mismo estilo que features previas (slice `@WebMvcTest` + `@Import` de seguridad).
 
 ## Constitution Check
-- [x] II. Stdlib-first: enum de Java puro, sin librería de validación adicional (Spring ya devuelve 400 al fallar la deserialización de un enum inválido).
-- [x] III. Sin over-engineering: nada de tabla `categoria` aparte ni relación — un enum basta para una lista fija y pequeña.
-- [x] IV. Tests obligatorios: cubiertos en tasks.md.
+- [x] III. Sin over-engineering: sin capa Service (el controller habla directo con los dos repositorios, como el CRUD de eventos); sin referencia inversa `Etiqueta→Evento` (evita recursión JSON sin DTOs nuevos).
+- [x] IV. Tests obligatorios: `EtiquetaControllerTest` (13) + reescritura de los de categoría (tasks.md T131-T135).
+- [x] V. Seguridad explícita: `GET /etiquetas` en la cadena 1; mutaciones con `@PreAuthorize("hasRole('ADMIN')")`.
 
 ## Project Structure
 
@@ -26,14 +28,17 @@ specs/005-categorias-eventos/
 
 ### Source Code
 ```text
-backend/src/main/java/.../entities/CategoriaEvento.java      # enum nuevo
-backend/src/main/java/.../entities/Evento.java                # + categoria (@Enumerated(EnumType.STRING))
-backend/src/main/java/.../dto/EventoDTO.java                  # + categoria
-backend/src/main/java/.../repositories/EventoRepository.java  # + findByCategoriaOrderByIdAsc, findByFechaAndCategoriaOrderByIdAsc
-backend/src/main/java/.../controller/EventoController.java    # GET /eventos: + @RequestParam categoria, branching
-backend/src/main/java/.../config/DataInitializer.java         # asignar categoría a los 5 eventos semilla
-backend/src/test/java/.../controller/EventoControllerPublicTest.java  # tests de filtro
-docs/api-contract.md                                           # documentar categoria + el nuevo query param
+backend/.../entities/Etiqueta.java            # nuevo (id, nombre único, sin backref)
+backend/.../repositories/EtiquetaRepository.java  # nuevo (findByNombre, findAllByOrderByNombreAsc)
+backend/.../entities/Evento.java              # - categoria, + etiquetas @ManyToMany EAGER
+backend/.../dto/EventoDTO.java                # categoria -> etiquetas: List<String>
+backend/.../repositories/EventoRepository.java  # queries ANY con DISTINCT + existsByEtiquetasId + categoriaLegacyDe (nativa, solo migración)
+backend/.../controller/EventoController.java  # ?etiquetas= ANY, validarEtiquetas (400) + resolverEtiquetas (defecto OTROS)
+backend/.../controller/EtiquetaController.java  # nuevo: GET público + POST/PUT/DELETE admin (409/404)
+backend/.../config/SecurityConfig.java        # GET /etiquetas a la cadena 1
+backend/.../config/DataInitializer.java       # seed de las 7 + migración legacy en el backfill
+backend/.../controller/EtiquetaControllerTest.java  # nuevo (13 tests)
+docs/api-contract.md                           # modelo etiquetas, ?etiquetas=, CRUD /etiquetas
 ```
 
 ## Complexity Tracking

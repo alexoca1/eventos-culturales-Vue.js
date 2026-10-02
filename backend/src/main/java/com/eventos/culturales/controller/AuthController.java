@@ -1,5 +1,6 @@
 package com.eventos.culturales.controller;
 
+import com.eventos.culturales.dto.ActualizarPerfilRequest;
 import com.eventos.culturales.dto.ActualizarUsuarioRequest;
 import com.eventos.culturales.dto.LoginRequest;
 import com.eventos.culturales.dto.RegisterRequest;
@@ -250,16 +251,77 @@ public class AuthController {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        Map<String, Object> perfil = mapaPerfil(usuario);
+
+        return ResponseEntity.ok(perfil);
+    }
+
+    private static Map<String, Object> mapaPerfil(Usuario usuario) {
         Map<String, Object> perfil = new HashMap<>();
         perfil.put("id", usuario.getId());
         perfil.put("email", usuario.getEmail());
         perfil.put("nombre", usuario.getNombre());
         perfil.put("apellidos", usuario.getApellidos());
+        perfil.put("telefono", usuario.getTelefono());
         perfil.put("fechaRegistro", usuario.getFechaRegistro());
         perfil.put("roles", usuario.getRoles());
         perfil.put("enabled", usuario.getEnabled());
+        perfil.put("nombreOrganizacion", usuario.getNombreOrganizacion());
+        perfil.put("encargadoNombre", usuario.getEncargadoNombre());
+        perfil.put("encargadoTelefono", usuario.getEncargadoTelefono());
+        perfil.put("encargadoEmail", usuario.getEncargadoEmail());
+        return perfil;
+    }
 
-        return ResponseEntity.ok(perfil);
+    // Punto 4: cada usuario edita sus propios datos (nunca rol ni estado).
+    // Teléfono obligatorio (no se puede vaciar); los datos de organización solo
+    // aplican si es ORGANIZADOR (para el resto se ignoran) y deben quedar completos.
+    @PutMapping("/perfil")
+    public ResponseEntity<?> actualizarPerfil(@RequestBody ActualizarPerfilRequest req,
+                                              Authentication authentication) {
+        org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) authentication.getPrincipal();
+        Usuario usuario = usuarioRepository.findByEmail(jwt.getSubject())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (req.nombre() != null) {
+            if (req.nombre().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El nombre es obligatorio"));
+            }
+            usuario.setNombre(req.nombre());
+        }
+        if (req.apellidos() != null) {
+            if (req.apellidos().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Los apellidos son obligatorios"));
+            }
+            usuario.setApellidos(req.apellidos());
+        }
+        if (req.telefono() != null) {
+            if (req.telefono().isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "El teléfono es obligatorio"));
+            }
+            usuario.setTelefono(req.telefono());
+        }
+        boolean esOrg = usuario.getRoles() != null && usuario.getRoles().equals(Set.of("ROLE_ORGANIZADOR"));
+        if (esOrg) {
+            String nombreOrg = req.nombreOrganizacion() != null ? req.nombreOrganizacion() : usuario.getNombreOrganizacion();
+            String encNombre = req.encargadoNombre() != null ? req.encargadoNombre() : usuario.getEncargadoNombre();
+            String encTel = req.encargadoTelefono() != null ? req.encargadoTelefono() : usuario.getEncargadoTelefono();
+            String encEmail = req.encargadoEmail() != null ? req.encargadoEmail() : usuario.getEncargadoEmail();
+            if (isBlank(nombreOrg) || isBlank(encNombre) || isBlank(encTel) || isBlank(encEmail)) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Para el rol ORGANIZADOR son obligatorios el nombre de la organización y los datos del encargado (nombre, teléfono y correo)"));
+            }
+            if (req.nombreOrganizacion() != null) usuario.setNombreOrganizacion(req.nombreOrganizacion());
+            if (req.encargadoNombre() != null) usuario.setEncargadoNombre(req.encargadoNombre());
+            if (req.encargadoTelefono() != null) usuario.setEncargadoTelefono(req.encargadoTelefono());
+            if (req.encargadoEmail() != null) usuario.setEncargadoEmail(req.encargadoEmail());
+        }
+        usuarioRepository.save(usuario);
+        return ResponseEntity.ok(mapaPerfil(usuario));
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.isBlank();
     }
 
     // Editar roles y estado de un usuario (solo ADMIN). La protección de
@@ -275,9 +337,9 @@ public class AuthController {
         }
         Usuario usuario = opt.get();
         if (req.roles() != null) {
-            if (req.roles().isEmpty() || !ROLES_VALIDOS.containsAll(req.roles())) {
+            if (req.roles().size() != 1 || !ROLES_VALIDOS.containsAll(req.roles())) {
                 return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Roles inválidos: deben ser un conjunto no vacío de ROLE_USER, ROLE_ORGANIZADOR, ROLE_ADMIN"));
+                        .body(Map.of("error", "Roles inválidos: debe contener exactamente un rol de ROLE_USER, ROLE_ORGANIZADOR, ROLE_ADMIN"));
             }
         }
         // US3: si el cambio te dejara a ti mismo sin ROLE_ADMIN o deshabilitado, 409 antes de guardar nada
@@ -289,12 +351,29 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "No puedes desactivarte ni quitarte ROLE_ADMIN a ti mismo"));
         }
+        // Punto 4: pasar a ORGANIZADOR exige los datos de organización (los que ya
+        // tenga guardados valen: solo se rechaza si el estado final queda incompleto).
+        // Va DESPUÉS del 409: la autoprotección manda sobre cualquier otro error.
+        if (rolesFinales != null && rolesFinales.equals(Set.of("ROLE_ORGANIZADOR"))) {
+            String nombreOrg = req.nombreOrganizacion() != null ? req.nombreOrganizacion() : usuario.getNombreOrganizacion();
+            String encNombre = req.encargadoNombre() != null ? req.encargadoNombre() : usuario.getEncargadoNombre();
+            String encTel = req.encargadoTelefono() != null ? req.encargadoTelefono() : usuario.getEncargadoTelefono();
+            String encEmail = req.encargadoEmail() != null ? req.encargadoEmail() : usuario.getEncargadoEmail();
+            if (isBlank(nombreOrg) || isBlank(encNombre) || isBlank(encTel) || isBlank(encEmail)) {
+                return ResponseEntity.badRequest().body(Map.of("error",
+                        "Para el rol ORGANIZADOR son obligatorios el nombre de la organización y los datos del encargado (nombre, teléfono y correo)"));
+            }
+        }
         if (req.roles() != null) {
             usuario.setRoles(new java.util.HashSet<>(req.roles()));
         }
         if (req.enabled() != null) {
             usuario.setEnabled(req.enabled());
         }
+        if (req.nombreOrganizacion() != null) usuario.setNombreOrganizacion(req.nombreOrganizacion());
+        if (req.encargadoNombre() != null) usuario.setEncargadoNombre(req.encargadoNombre());
+        if (req.encargadoTelefono() != null) usuario.setEncargadoTelefono(req.encargadoTelefono());
+        if (req.encargadoEmail() != null) usuario.setEncargadoEmail(req.encargadoEmail());
         usuarioRepository.save(usuario);
 
         Map<String, Object> datos = new HashMap<>();
@@ -302,6 +381,10 @@ public class AuthController {
         datos.put("email", usuario.getEmail());
         datos.put("roles", usuario.getRoles());
         datos.put("enabled", usuario.getEnabled());
+        datos.put("nombreOrganizacion", usuario.getNombreOrganizacion());
+        datos.put("encargadoNombre", usuario.getEncargadoNombre());
+        datos.put("encargadoTelefono", usuario.getEncargadoTelefono());
+        datos.put("encargadoEmail", usuario.getEncargadoEmail());
         return ResponseEntity.ok(datos);
     }
 
@@ -328,6 +411,10 @@ public class AuthController {
                     datos.put("roles", u.getRoles());
                     datos.put("telefono", u.getTelefono());
                     datos.put("enabled", u.getEnabled());
+                    datos.put("nombreOrganizacion", u.getNombreOrganizacion());
+                    datos.put("encargadoNombre", u.getEncargadoNombre());
+                    datos.put("encargadoTelefono", u.getEncargadoTelefono());
+                    datos.put("encargadoEmail", u.getEncargadoEmail());
                     return datos;
                 })
                 .collect(Collectors.toList());

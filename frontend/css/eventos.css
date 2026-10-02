@@ -1,34 +1,149 @@
 /* eventos.css */
 
+/* 019-sin-parpadeo: el <script type="module"> es diferido, asÃƒÂ­ que el navegador
+   pinta el HTML literal ANTES de que Vue monte. En ese pintado v-if/v-show aÃƒÂºn
+   no han hecho nada y se veÃƒÂ­an todas las secciones apiladas y el menÃƒÂº de
+   sesiÃƒÂ³n abierto. v-cloak oculta el contenedor hasta que Vue lo monta (el
+   atributo se lo quita el propio mount). */
+[v-cloak] {
+    display: none;
+}
+
+/* 019-carga-inicial: el aviso de carga mide una ventana entera, asÃ­ que durante
+   la carga la pÃ¡gina se puede desplazar y despuÃ©s ya no (con contenido corto).
+   Reservar el hueco de la barra evita ese desplazamiento lateral de ~15px.
+   Donde no se soporta (Safari antiguo) se ignora y no rompe nada. */
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
-    font-family: Arial, sans-serif;
+    font-family: var(--font-family-base);
     margin: 0;
     padding: 0;
-    background-color: #1894ff; /* Gris Claro */
-    color: #333; /* Negro */
+    background-color: var(--color-bg); /* Gris Claro */
+    color: var(--color-text); /* Negro */
 }
 
 header {
-    background-color: #ff6347; /* Tomate */
+    background-color: var(--color-primary); /* Tomate */
     color: white;
     padding: 0.2em;
     text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Punto 5: header unificado en las 3 pÃƒÂ¡ginas (tÃƒÂ­tulo a inicio + indicador de sesiÃƒÂ³n) */
+.header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 0.2em var(--space-md);
+}
+
+.header-bar h1 {
+    font-size: 1.4em;
+    margin: 0.3em 0;
+}
+
+.titulo-inicio {
+    color: white;
+    text-decoration: none;
+}
+
+.sesion {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.sesion > button {
+    background-color: var(--color-primary-hover);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+}
+
+.menu-sesion {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    min-width: 12em;
+    z-index: 1001;
+}
+
+.menu-sesion a, .menu-sesion button {
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--color-text);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1em;
+}
+
+.menu-sesion a:hover, .menu-sesion button:hover {
+    background-color: var(--color-secondary);
+}
+
+.sesion-entrar {
+    color: white;
+    flex-shrink: 0;
+}
+
+/* Punto 5: toolbar de acciones separada de los filtros de bÃƒÂºsqueda */
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.acciones button {
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.acciones button:hover {
+    background-color: var(--color-primary-hover);
+}
+
+/* SubtÃƒÂ­tulo de pÃƒÂ¡gina (p. ej. "Panel del organizador", antes en el header) */
+.panel-tag {
+    text-align: center;
+    font-weight: bold;
 }
 
 main {
-    padding: 1em;
+    padding: var(--space-md);
 }
 
 .control {
     display: flex;
+    /* 019-buscador: el título y los atajos se añaden como hijos de esta barra.
+       Sin wrap, el h3 y el p se estrujarían en la misma fila que los filtros. */
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1em;
-    padding: 1em;
-    background-color: #ffa07a; /* Ligero Tomate */
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-secondary); /* Ligero Tomate */
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
 }
 
 .control .fecha {
@@ -38,70 +153,99 @@ main {
 
 .control label {
     font-weight: bold;
-    margin-right: 0.5em;
+    margin-right: var(--space-sm);
 }
 
 .control input[type="date"] {
-    padding: 0.5em;
-    border: 1px solid #ccc; /* Gris */
-    border-radius: 5px;
-    margin-right: 0.5em;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border); /* Gris */
+    border-radius: var(--radius-sm);
+    margin-right: var(--space-sm);
 }
 
 .control button {
-    padding: 0.5em 1em;
+    padding: var(--space-sm) var(--space-md);
     width: 25%;
-    background-color: #ff6347; /* Tomate */
+    background-color: var(--color-primary); /* Tomate */
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background-color 0.3s;
-    margin-left: 0.5em;
+    transition: background-color var(--transition-fast);
+    margin-left: var(--space-sm);
 }
 
 .control button:hover {
-    background-color: #e53900; /* Tomate Oscuro */
+    background-color: var(--color-primary-hover); /* Tomate Oscuro */
+}
+
+/* 019-buscador: título del buscador. Es un flex item de .control, así que sin
+   width:100% se estrujaría en la fila de los filtros. width y no flex-basis
+   porque en el media query de 768px .control pasa a flex-direction: column y
+   ahí flex-basis mediría altura, no ancho. */
+.control h3,
+.control > p {
+    width: 100%;
+    margin: 0;
+}
+
+.atajos-fecha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+/* Dos clases a propósito: .control button pone width:25% (más arriba) y el
+   media query de 768px lo pone a width:100%. Con igual especificidad ganaría
+   el que esté después en el fichero, así que a (0,2,1) los atajos salen
+   pequeños en escritorio y en móvil. El margin-left de .control button se
+   anula porque con el gap duplicaría el espacio entre botones. */
+.control .atajos-fecha button {
+    width: auto;
+    margin-left: 0;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.85em;
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 1em;
+    margin-bottom: var(--space-md);
 }
 
 .mostrar_evento {
     display: flex;
-    flex-direction: row; /* Asegura distribución horizontal */
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    flex-direction: row; /* Asegura distribuciÃƒÂ³n horizontal */
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeÃƒÂ±as */
     gap: 0.5rem; /* Espaciado uniforme entre elementos */
-    margin: 1em 0;
+    margin: var(--space-md) 0;
     justify-content: space-between;
     align-items: stretch;
 }
 
 .mostrar_evento > div {
     flex: 1 1 32%; /* flex-grow, flex-shrink, flex-basis */
-    min-width: 360px; /* Ancho mínimo antes de envolver */
+    min-width: 360px; /* Ancho mÃƒÂ­nimo antes de envolver */
     max-width: 360px; /* Evita que los elementos sean demasiado anchos */
-    padding: 1em;
+    padding: var(--space-md);
     margin-bottom: 1rem; /* Espaciado cuando los elementos se envuelven */
     box-sizing: border-box; /* Incluye padding y border en el ancho total */
     display: flex;
     flex-direction: column;
     justify-content: start;
-    background-color: #ffa07a; 
+    background-color: var(--color-secondary); 
 }
 
 .datos_eventos, .cartel, .mapa {
     flex: 1; /* Asegura que las cajas ocupen el espacio disponible */
-    padding: 1em;
-    background-color: white; /* Blanco */
-    border: 1px solid #ccc; /* Gris */
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: var(--space-md);
+    background-color: var(--color-surface); /* Blanco */
+    border: 1px solid var(--color-border); /* Gris */
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
 }
 .cartel {
-    padding: 1em 1em 0.5em 1em; /* Ajusta el padding inferior a 0.5em */
+    padding: var(--space-md) var(--space-md) var(--space-sm) var(--space-md); /* Ajusta el padding inferior a 0.5em */
 }
 
 .cartel img {
@@ -109,18 +253,18 @@ h2 {
     height: auto;
     object-fit: contain; /* Asegura que la imagen se ajuste dentro del contenedor */
     max-width: 100%; /* Asegura que la imagen no se salga del contenedor */
-    margin-bottom: 0.5em; /* Ajusta el margen inferior de la imagen */
+    margin-bottom: var(--space-sm); /* Ajusta el margen inferior de la imagen */
 }
 
 .datos_eventos p, .cartel p, .mapa p {
-    margin: 0.5em 0;
+    margin: var(--space-sm) 0;
     font-size: 1em;
-    color: #333; /* Negro */
+    color: var(--color-text); /* Negro */
 }
 
 .datos_eventos p:first-child, .cartel p:first-child, .mapa p:first-child {
     font-weight: bold;
-    margin-bottom: 0.5em;
+    margin-bottom: var(--space-sm);
 }
 
 .cartel div, .mapa div {
@@ -129,27 +273,27 @@ h2 {
 }
 
 .mapa div iframe {
-    width: 100%; /* Ancho fijo para las imágenes del mapa */
-    height: 300px; /* Alto fijo para las imágenes del mapa */
+    width: 100%; /* Ancho fijo para las imÃƒÂ¡genes del mapa */
+    height: 300px; /* Alto fijo para las imÃƒÂ¡genes del mapa */
     border: 0;
 }
 
 .mostrar_ingresar {
-    margin-top: 1em;
-    padding: 1em;
-    background-color: white; /* Blanco */
-    border: 1px solid #ccc; /* Gris */
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 600px; /* Establece un ancho máximo para el contenedor */
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-surface); /* Blanco */
+    border: 1px solid var(--color-border); /* Gris */
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    max-width: 600px; /* Establece un ancho mÃƒÂ¡ximo para el contenedor */
     width: 100%; /* Asegura que el contenedor ocupe el ancho disponible */
     margin: 0 auto; /* Centra el contenedor horizontalmente */
-    background-color: #ffa07a; 
+    background-color: var(--color-secondary); 
 }
 
 .mostrar_ingresar h3 {
     margin-top: 0;
-    margin-bottom: 1em; /* Añade espacio debajo del título */
+    margin-bottom: var(--space-md); /* AÃƒÂ±ade espacio debajo del tÃƒÂ­tulo */
 }
 
 .mostrar_ingresar form {
@@ -158,43 +302,43 @@ h2 {
 }
 
 .mostrar_ingresar label {
-    margin-top: 0.5em;
-    margin-bottom: 0.25em; /* Añade espacio debajo de las etiquetas */
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-xs); /* AÃƒÂ±ade espacio debajo de las etiquetas */
 }
 
 .mostrar_ingresar input, .mostrar_ingresar textarea {
-    margin-top: 0.25em; /* Reduce el margen superior de los inputs y textarea */
+    margin-top: var(--space-xs); /* Reduce el margen superior de los inputs y textarea */
     padding: 0.75em; /* Aumenta el padding para mayor comodidad */
-    border: 1px solid #ccc; /* Gris */
-    border-radius: 5px;
+    border: 1px solid var(--color-border); /* Gris */
+    border-radius: var(--radius-sm);
     width: 100%; /* Asegura que los inputs y textarea ocupen el ancho disponible */
     max-width: 100%; /* Asegura que los inputs y textarea no excedan el ancho del contenedor */
     box-sizing: border-box; /* Incluye padding y border en el ancho total */
 }
 
 .mostrar_ingresar button {
-    margin-top: 1em;
+    margin-top: var(--space-md);
     padding: 0.75em; /* Aumenta el padding para mayor comodidad */
-    background-color: #ff6347; /* Tomate */
+    background-color: var(--color-primary); /* Tomate */
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color var(--transition-fast);
 }
 
 .mostrar_ingresar button:hover {
-    background-color: #e53900; /* Tomate Oscuro */
+    background-color: var(--color-primary-hover); /* Tomate Oscuro */
 }
 
 .eliminar {
-    margin-top: 1em;
-    padding: 1em;
-    background-color: white; /* Blanco */
-    border: 1px solid #ccc; /* Gris */
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    background-color: #ffa07a; 
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-surface); /* Blanco */
+    border: 1px solid var(--color-border); /* Gris */
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    background-color: var(--color-secondary); 
 }
 
 .eliminar h3 {
@@ -203,32 +347,32 @@ h2 {
 
 .eliminar label {
     display: block;
-    margin-top: 0.5em;
+    margin-top: var(--space-sm);
     
 }
 
 .eliminar button {
-    margin-top: 1em;
-    padding: 0.5em;
-    background-color: #ff6347; /* Tomate */
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    background-color: var(--color-primary); /* Tomate */
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color var(--transition-fast);
 }
 
 .eliminar button:hover {
-    background-color: #e53900; /* Tomate Oscuro */
+    background-color: var(--color-primary-hover); /* Tomate Oscuro */
 }
 
-/* Asegurar que todas las imágenes tengan el mismo tamaño, excepto las de Google Maps */
+/* Asegurar que todas las imÃƒÂ¡genes tengan el mismo tamaÃƒÂ±o, excepto las de Google Maps */
 img {
     display: block;
     width: 100%;
     height: auto;
-    max-width: 800px; /* Tamaño fijo para todas las imágenes */
-    margin: 0 auto 1em auto; /* Centra la imagen horizontalmente */
+    max-width: 800px; /* TamaÃƒÂ±o fijo para todas las imÃƒÂ¡genes */
+    margin: 0 auto var(--space-md) auto; /* Centra la imagen horizontalmente */
 }
 
 .file-input-wrapper {
@@ -241,34 +385,98 @@ img {
 }
 
 .file-input-wrapper button {
-    padding: 0.5em 1em;
-    background-color: #ff6347; /* Tomate */
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary); /* Tomate */
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color var(--transition-fast);
 }
 
 .file-input-wrapper button:hover {
-    background-color: #e53900; /* Tomate Oscuro */
+    background-color: var(--color-primary-hover); /* Tomate Oscuro */
 }
 
 @media (max-width: 768px) {
     .control {
-        flex-direction: column; /* Cambia la dirección a columna */
+        flex-direction: column; /* Cambia la direcciÃƒÂ³n a columna */
         align-items: flex-start; /* Alinea los elementos al inicio */
     }
 
     .control .fecha, .control button {
         width: 100%; /* Asegura que los elementos ocupen el ancho completo */
-        margin-bottom: 0.5em; /* Añade margen inferior para separar elementos */
+        margin-bottom: var(--space-sm); /* AÃƒÂ±ade margen inferior para separar elementos */
+    }
+
+    .control .fecha {
+        flex-wrap: wrap; /* Los checkboxes de etiquetas bajan de lÃƒÂ­nea */
     }
 
     .control button {
         margin-left: 0; /* Elimina el margen izquierdo para los botones */
     }
 
+    /* Punto 8: header unificado apilado en tablet/mÃƒÂ³vil */
+    .header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+
+    .header-bar h1 {
+        font-size: 1.2em;
+    }
+
+    /* Punto 8: tarjetas a ancho completo (el mÃƒÂ­nimo de 360px desbordaba en mÃƒÂ³vil) */
+    .mostrar_evento > div {
+        min-width: 0;
+        max-width: 100%;
+        flex-basis: 100%;
+    }
+
+    /* Punto 8: filas de gestiÃƒÂ³n con acciones debajo en vez de apretadas al lado */
+    .evento-row {
+        flex-wrap: wrap;
+    }
+
+    .evento-acciones {
+        width: 100%;
+    }
+
+    /* Punto 8: toolbar de acciones 2 por fila */
+    .acciones button {
+        flex: 1 1 40%;
+    }
+
+    /* Punto 8: el dropdown no se sale de la pantalla */
+    .menu-sesion {
+        max-width: 90vw;
+    }
+
+}
+
+/* Punto 8: mÃƒÂ³vil pequeÃƒÂ±o (Ã¢â€°Â¤480px) */
+@media (max-width: 480px) {
+    .header-bar h1 {
+        font-size: 1.05em;
+    }
+
+    .acciones button {
+        flex: 1 1 100%; /* Botones a ancho completo, uno por fila */
+    }
+
+    .evento-acciones {
+        display: flex;
+    }
+
+    .evento-acciones button {
+        flex: 1; /* Editar/Eliminar reparten el ancho */
+    }
+
+    main {
+        padding: var(--space-sm); /* MÃƒÂ¡s sitio ÃƒÂºtil en pantallas estrechas */
+    }
 }
 
 /* Lightbox: cartel HD al hacer clic */
@@ -289,22 +497,22 @@ img {
     object-fit: contain;
 }
 
-/* Aviso de pendiente de revisión (organizador) */
+/* Aviso de pendiente de revisiÃƒÂ³n (organizador) */
 .aviso-revision {
-    margin: 1em 0;
-    padding: 1em;
+    margin: var(--space-md) 0;
+    padding: var(--space-md);
     background-color: #fff3cd;
-    border: 2px solid #ff9800;
-    border-radius: 5px;
+    border: 2px solid var(--color-estado-pendiente);
+    border-radius: var(--radius-sm);
     color: #663c00;
 }
 
 /* Gestionar eventos: tarjeta compacta por evento */
 .gestionar {
-    margin-top: 1em;
-    padding: 1em;
-    background-color: #ffa07a; /* Ligero Tomate */
-    border-radius: 5px;
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-secondary); /* Ligero Tomate */
+    border-radius: var(--radius-sm);
 }
 
 .evento-row {
@@ -313,8 +521,8 @@ img {
     gap: 0.75em;
     padding: 0.35em 0.5em;
     margin-bottom: 0.35em;
-    background-color: white;
-    border-radius: 5px;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-sm);
 }
 
 .evento-thumb {
@@ -336,31 +544,31 @@ img {
 
 .evento-acciones {
     display: flex;
-    gap: 0.5em;
+    gap: var(--space-sm);
     flex-shrink: 0;
 }
 
 /* Badge de estado (Mis eventos del organizador) */
 .badge {
     display: inline-block;
-    margin-left: 0.5em;
+    margin-left: var(--space-sm);
     padding: 0.1em 0.5em;
-    border-radius: 10px;
+    border-radius: var(--radius-pill);
     font-size: 0.8em;
     font-weight: normal;
     color: white;
     background-color: #777;
 }
 
-.badge-pendiente_revision { background-color: #ff9800; }
-.badge-aprobado { background-color: #4caf50; }
-.badge-rechazado { background-color: #f44336; }
-.badge-pendiente_eliminacion { background-color: #9c27b0; }
+.badge-pendiente_revision { background-color: var(--color-estado-pendiente); }
+.badge-aprobado { background-color: var(--color-estado-aprobado); }
+.badge-rechazado { background-color: var(--color-estado-rechazado); }
+.badge-pendiente_eliminacion { background-color: var(--color-estado-eliminacion); }
 
-/* Badges de rol (Gestión de usuarios) */
-.badge-rol-admin { background-color: #d32f2f; }
-.badge-rol-organizador { background-color: #1976d2; }
-.badge-rol-user { background-color: #616161; }
+/* Badges de rol (GestiÃƒÂ³n de usuarios) */
+.badge-rol-admin { background-color: var(--color-rol-admin); }
+.badge-rol-organizador { background-color: var(--color-rol-organizador); }
+.badge-rol-user { background-color: var(--color-rol-user); }
 
 /* Icono de favorito en tarjetas */
 .fav-btn {
@@ -368,6 +576,282 @@ img {
     border: none;
     cursor: pointer;
     font-size: 1.4em;
-    color: #e6a817;
+    color: var(--color-favorito);
     padding: 0 0.2em;
+}
+
+/* 017-paginacion: control Anterior / indicador / Siguiente */
+.paginacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0;
+}
+
+.paginacion button {
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.paginacion button:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+.paginacion button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* 018-footer: pie global (fondo primario como el header) */
+.footer {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    padding: var(--space-lg);
+    margin-top: var(--space-lg);
+}
+
+.footer-cols {
+    display: flex;
+    gap: var(--space-lg);
+    flex-wrap: wrap;
+}
+
+.footer-col {
+    flex: 1;
+    min-width: 180px;
+}
+
+.footer-col h3 {
+    margin-bottom: var(--space-sm);
+    font-size: 1rem;
+}
+
+.footer-col p, .footer-col a {
+    font-size: 0.9rem;
+    color: var(--color-surface);
+    text-decoration: none;
+    line-height: 1.8;
+}
+
+.footer-social {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-sm);
+    align-items: center;
+}
+
+.footer-social a {
+    color: var(--color-surface);
+    opacity: 0.85;
+    transition: opacity var(--transition-fast);
+}
+
+.footer-social a:hover {
+    opacity: 1;
+}
+
+.footer-social svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.footer-copy {
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+    .footer-cols { flex-direction: column; }
+}
+
+/* 019-carga-inicial: aviso mientras <main> espera a que la sesion y la
+   restauracion de ?vista= terminen. Sin el, al recargar se veia la portada
+   un instante antes de la seccion guardada en la URL.
+   Ocupa la ventana entera a proposito: como <main> esta oculto, sin esto el
+   documento se encogia a ~300px, el pie quedaba pegado a la cabecera y luego
+   se deslizaba al aparecer el contenido. Lleno la ventana, el pie queda por
+   debajo del pliegue y no hay nada que se deslice.
+   Nada de calc(100vh - 12rem): la altura real de cabecera y pie cambia con el
+   contenido y con la ventana, y un numero fijo ahi se pudre en cuanto se toca
+   el header. */
+.cargando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    min-height: 100vh;
+    min-height: 100dvh;
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+/* Con el backend frÃ­o la puerta puede aguantar segundos: un texto plano parece
+   texto estÃ¡tico, no una carga. prefers-reduced-motion lo deja fijo. */
+.cargando::before {
+    content: "";
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 auto; /* que el flex no lo aplaste */
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: cargando-giro 0.8s linear infinite;
+}
+
+@keyframes cargando-giro {
+    to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cargando::before { animation: none; }
+}
+
+/* ------------------------------------------------- 019: galería de fotos */
+/* Miniaturas bajo el cartel en las tarjetas */
+.galeria-miniaturas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs, 4px);
+    margin: var(--space-xs, 4px) 0;
+}
+
+.galeria-miniaturas img {
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+/* Los 5 huecos del formulario */
+.galeria-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm, 8px);
+}
+
+.galeria-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    min-width: 9rem;
+}
+
+.galeria-slot-num {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+/* El hueco vacío es el que invite a elegir: sin foto, solo el input */
+.galeria-slot-preview {
+    max-width: 100%;
+    max-height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* Foto marcada con "x": se sigue viendo porque no se borra hasta guardar, pero
+   tachada y atenuada para que el clic se note (slotPendienteBorrar). */
+.galeria-slot-borrar {
+    border-color: #c0392b;
+    background: rgba(192, 57, 43, 0.08);
+}
+
+.galeria-slot-borrar .galeria-slot-preview {
+    opacity: 0.45;
+    filter: grayscale(1);
+}
+
+.galeria-slot-borrar .galeria-slot-quitar {
+    border-color: #c0392b;
+    color: #c0392b;
+}
+
+.galeria-slot-quitar {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
+    line-height: 1;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--color-text);
+}
+
+.galeria-slot-quitar:hover,
+.galeria-slot-quitar:focus-visible {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* 019 (F192): enlaces de redes y de contacto en las tarjetas y el formulario */
+.redes-evento {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
+}
+
+.red-evento-link {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-surface);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--radius-pill);
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.red-evento-link:hover,
+.red-evento-link:focus-visible {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.red-social-row {
+    display: flex;
+    gap: var(--space-sm);
+    margin: var(--space-xs) 0;
+    align-items: center;
+}
+
+.red-social-row select {
+    padding: var(--space-xs);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+}
+
+.red-social-row input {
+    flex: 1;
+    min-width: 10rem;
+    padding: var(--space-xs);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.red-social-row button {
+    background: transparent;
+    border: none;
+    color: var(--color-primary);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: var(--space-xs);
 }

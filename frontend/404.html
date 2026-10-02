@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>404 — Página no encontrada</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <style>
+        /* Hoja inline mínima: solo layout de esta página (sin depender de
+           eventos.css/index.css, que dan por sentado contextos que la 404 no tiene) */
+        body {
+            font-family: var(--font-family-base);
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+        }
+        header {
+            background-color: var(--color-primary);
+            color: white;
+            padding: var(--space-md);
+            text-align: center;
+        }
+        main {
+            max-width: 600px;
+            margin: var(--space-md) auto;
+            padding: var(--space-md);
+            background-color: var(--color-surface);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+        .btn-inicio {
+            display: inline-block;
+            margin-top: var(--space-md);
+            padding: var(--space-sm) var(--space-md);
+            background-color: var(--color-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            transition: background-color var(--transition-fast);
+        }
+        .btn-inicio:hover {
+            background-color: var(--color-primary-hover);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Página de Eventos Culturales en Puertollano</h1>
+    </header>
+    <main>
+        <h2>404 — Página no encontrada</h2>
+        <p>La página que buscas no existe o ha sido movida.</p>
+        <a class="btn-inicio" href="index.html">Volver al inicio</a>
+    </main>
+</body>
+</html>

@@ -54,6 +54,23 @@ public class GlobalExceptionHandler {
                 .body(Map.of("error", "Cuerpo de la petición inválido (revisa enums, fechas y horas)"));
     }
 
+    // El INSERT de un LONGBLOB viaja en un paquete MariaDB de ~2x los bytes de la foto:
+    // con el max_allowed_packet por defecto (1 MB) una foto de >= 512 KB revienta con un
+    // 500 sin pista. Se traduce a 413 con el motivo real; el resto de fallos de JPA caen
+    // en el 500 genérico de abajo como hasta ahora.
+    @ExceptionHandler(org.springframework.orm.jpa.JpaSystemException.class)
+    public ResponseEntity<Map<String, String>> handleJpaSystemException(
+            org.springframework.orm.jpa.JpaSystemException ex) {
+        for (Throwable t = ex; t != null; t = t.getCause()) {
+            if (t.getMessage() != null && t.getMessage().contains("Packet for query is too large")) {
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body(Map.of("error", "La imagen supera el tamaño máximo que admite la base de datos; "
+                                + "reduce su resolución o aumenta max_allowed_packet del servidor MySQL"));
+            }
+        }
+        return handleGlobalException(ex);
+    }
+
     // Manejo de excepciones no controladas: al cliente SIEMPRE mensaje genérico;
     // el detalle completo queda solo en el log del servidor (US2 hardening).
     @ExceptionHandler(Exception.class)

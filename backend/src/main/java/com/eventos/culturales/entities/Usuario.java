@@ -51,6 +51,20 @@ public class Usuario implements UserDetails {
     @Column(nullable = true)
     private String apellidos;
 
+    // Punto 4: datos de la organización (obligatorios cuando el rol es ORGANIZADOR).
+    // El nombre de la organización sustituye al email como nombre visible del usuario.
+    @Column(nullable = true)
+    private String nombreOrganizacion;
+
+    @Column(nullable = true)
+    private String encargadoNombre;
+
+    @Column(nullable = true)
+    private String encargadoTelefono;
+
+    @Column(nullable = true)
+    private String encargadoEmail;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime fechaRegistro;

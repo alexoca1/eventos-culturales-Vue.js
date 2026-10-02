@@ -1,79 +1,85 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Eventos Culturales en Puertollano</title>
+    <link rel="stylesheet" href="../css/variables.css">
     <link rel="stylesheet" href="../css/eventos.css">
 </head>
 <body>
-    <div id="eventos">
-        <header>
-            <h1>Página de Eventos Culturales en Puertollano</h1>
+    <div id="eventos" v-cloak>
+        <header class="header-bar">
+            <h1><a class="titulo-inicio" href="../index.html" @click.prevent="irAInicio()">PÃ¡gina de Eventos Culturales en Puertollano</a></h1>
+            <template v-if="!arrancando">
+                <div class="sesion" v-if="tieneSesion()">
+                    <button @click="alternarMenu()">{{sesionNombre || 'Mi cuenta'}}</button>
+                    <div v-show="menuAbierto" class="menu-sesion">
+                        <button @click="irAPanel()">Mi panel</button>
+                        <button @click="irAPerfil()">Editar mis datos</button>
+                        <button @click="logout()">Cerrar sesiÃ³n</button>
+                    </div>
+                </div>
+                <a v-else class="sesion-entrar" href="../index.html">Ingresar</a>
+            </template>
         </header>
 
-        <main>
+        <main v-show="!arrancando">
             <div class="control">
+                <h3>ðŸ” Buscar eventos</h3>
+                <p style="margin-top: -0.3em; opacity: 0.85;">Filtra por fecha o etiqueta, o usa los atajos rÃ¡pidos.</p>
                 <div class="fecha">
                     <label for="">Buscar eventos por fecha</label>
-                    <input type="date" @change="searchEvent()" v-model="searchDate">
+                    <input type="date" @change="filtrar()" v-model="searchDate">
+                    <div class="atajos-fecha">
+                        <button type="button" @click="hoy()">Hoy</button>
+                        <button type="button" @click="finDeSemana()">Este fin de semana</button>
+                        <button type="button" @click="proximaSemana()">PrÃ³xima semana</button>
+                    </div>
+                </div>
+                <div class="buscador-texto">
+                    <label>🔍 Buscar por nombre o lugar</label>
+                    <div style="display:flex; gap:var(--space-sm)">
+                        <input type="text" v-model="searchText"
+                               placeholder="Ej: Teatro Municipal, Jazz..."
+                               minlength="2" maxlength="100"
+                               @keyup.enter="buscarPorTexto()">
+                        <button type="button" @click="buscarPorTexto()">Buscar</button>
+                    </div>
+                    <small v-if="errBusqueda" style="color:var(--color-estado-rechazado)">
+                        {{errBusqueda}}</small>
                 </div>
                 <div class="fecha">
-                    <label for="">Filtrar por categoría</label>
-                    <select @change="searchEvent()" v-model="searchCategoria">
-                        <option value="">Todas</option>
-                        <option value="MUSICA">Música</option>
-                        <option value="TEATRO">Teatro</option>
-                        <option value="EXPOSICION">Exposición</option>
-                        <option value="CINE">Cine</option>
-                        <option value="LITERATURA">Literatura</option>
-                        <option value="INFANTIL">Infantil</option>
-                        <option value="OTROS">Otra</option>
-                    </select>
+                    <label for="">Filtrar por etiquetas</label>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id">
+                        <input type="checkbox" :value="t.nombre" v-model="searchEtiquetas" @change="filtrar()"> {{t.nombre}}
+                    </label>
                 </div>
+            </div>
+            <div class="acciones">
                 <button v-if="tieneSesion()" @click="verFavoritos()">Mis favoritos</button>
-                <button v-if="tieneSesion()" @click="volverBuscar()">Buscar eventos</button>
-                <button v-if="tieneSesion()" @click="logout()">Cerrar sesión</button>
+                <button v-if="tieneSesion()" @click="volverBuscar()">PrÃ³ximos eventos</button>
             </div>
 
             <div v-show="showCover">
                 <img src="../img/evento_portada.jpg" alt="portada">
             </div>
 
-            <h2 v-show="showEvent">Eventos para el día {{formatDate(date)}}</h2>
-
-            <div class="mostrar_evento" v-show="showEvent" v-for="ev in dayEvents" :key="ev.id">
-                <div class="cartel">
-                    <p>Cartel (clic para ampliar)
-                        <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "★" : "☆" }}</button>
-                    </p>
-                    <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
-                </div>
-                <div class="datos_eventos">
-                    <p>Fecha: <br>{{formatDate(ev.date)}}</p>
-                    <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
-                    <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
-                    <p>Establecimiento: <br>{{ev.establishment}}</p>
-                    <p>Domicilio: <br>{{ev.address}}</p>
-                    <p>Evento principal: <br>{{ev.content}}</p>
-                </div>
-                <div class="mapa">
-                    <p>Ubicación</p>
-                    <div v-html="ev.map"></div>
-                </div>
-            </div>
-
-            <div v-show="showNoEvent">
-                <img src="../img/no_hay_eventos.jpg" alt="no hay evento">
-            </div>
-
-            <div v-show="showFavoritos">
-                <h2>Mis favoritos</h2>
-                <div class="mostrar_evento" v-for="ev in favoritosEventos" :key="ev.id">
+            <div v-show="showProximos" id="lista-proximos">
+                <h2>PrÃ³ximos eventos</h2>
+                <p>De lo mÃ¡s prÃ³ximo a lo Ãºltimo.</p>
+                <p style="opacity: 0.85;">Mostrando los prÃ³ximos eventos disponibles. Â¿Buscas algo en una fecha o categorÃ­a concreta? Usa el buscador de arriba â†‘</p>
+                <div class="mostrar_evento" v-for="ev in proximosEventos" :key="ev.id">
                     <div class="cartel">
                         <p>Cartel (clic para ampliar)
-                            <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "★" : "☆" }}</button>
+                            <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "â˜…" : "â˜†" }}</button>
                         </p>
                         <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                    </div>
+                    <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                    <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
+                        <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
+                            @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
+                            :alt="'Foto ' + (o + 1) + ' del evento'" style="max-height: 60px; cursor: zoom-in;">
                     </div>
                     <div class="datos_eventos">
                         <p>Fecha: <br>{{formatDate(ev.date)}}</p>
@@ -82,25 +88,187 @@
                         <p>Establecimiento: <br>{{ev.establishment}}</p>
                         <p>Domicilio: <br>{{ev.address}}</p>
                         <p>Evento principal: <br>{{ev.content}}</p>
+                        <p v-if="ev.etiquetas && ev.etiquetas.length">Etiquetas: <br>{{ev.etiquetas.join(", ")}}</p>
+                        <p v-if="ev.telefono">📞 <a :href="telHref(ev.telefono)">{{ev.telefono}}</a></p>
+                        <p v-if="ev.urlEvento">🔗 <a :href="ev.urlEvento" target="_blank" rel="noopener">Más información</a></p>
+                        <div v-if="ev.redes && ev.redes.length" class="redes-evento">
+                            <a v-for="r in ev.redes" :key="r.red" :href="r.url" target="_blank" rel="noopener" :title="r.red" class="red-evento-link">{{textoRed(r.red)}}</a>
+                        </div>
                     </div>
                     <div class="mapa">
-                        <p>Ubicación</p>
+                        <p>UbicaciÃ³n</p>
                         <div v-html="ev.map"></div>
                     </div>
                 </div>
-                <div v-show="favoritosEventos.length === 0">
-                    <img src="../img/no_hay_eventos.jpg" alt="sin favoritos">
-                    <p>Todavía no tienes favoritos. Marca la estrella ☆ en cualquier evento.</p>
+                <div class="paginacion" v-show="paginaMeta.totalPages > 1">
+                    <button :disabled="paginaMeta.first" @click="paginaAnterior()">Anterior</button>
+                    <span>PÃ¡gina {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
+                    <button :disabled="paginaMeta.last" @click="paginaSiguiente()">Siguiente</button>
                 </div>
             </div>
 
+            <h2 id="lista-eventos" v-show="showEvent">
+                <span v-if="searchText">Resultados para "{{searchText}}"</span>
+                <span v-else>Eventos para el dÃ­a {{formatDate(date)}}</span>
+            </h2>
+
+            <div class="mostrar_evento" v-show="showEvent" v-for="ev in dayEvents" :key="ev.id">
+                <div class="cartel">
+                    <p>Cartel (clic para ampliar)
+                        <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "â˜…" : "â˜†" }}</button>
+                    </p>
+                        <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                    </div>
+                    <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                    <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
+                        <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
+                            @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
+                            :alt="'Foto ' + (o + 1) + ' del evento'" style="max-height: 60px; cursor: zoom-in;">
+                    </div>
+                    <div class="datos_eventos">
+                        <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                    <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                    <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
+                    <p>Establecimiento: <br>{{ev.establishment}}</p>
+                    <p>Domicilio: <br>{{ev.address}}</p>
+                    <p>Evento principal: <br>{{ev.content}}</p>
+                    <p v-if="ev.etiquetas && ev.etiquetas.length">Etiquetas: <br>{{ev.etiquetas.join(", ")}}</p>
+                        <p v-if="ev.telefono">📞 <a :href="telHref(ev.telefono)">{{ev.telefono}}</a></p>
+                        <p v-if="ev.urlEvento">🔗 <a :href="ev.urlEvento" target="_blank" rel="noopener">Más información</a></p>
+                        <div v-if="ev.redes && ev.redes.length" class="redes-evento">
+                            <a v-for="r in ev.redes" :key="r.red" :href="r.url" target="_blank" rel="noopener" :title="r.red" class="red-evento-link">{{textoRed(r.red)}}</a>
+                        </div>
+                </div>
+                <div class="mapa">
+                    <p>UbicaciÃ³n</p>
+                    <div v-html="ev.map"></div>
+                </div>
+            </div>
+            <div class="paginacion" v-show="showEvent && paginaMeta.totalPages > 1">
+                <button :disabled="paginaMeta.first" @click="paginaAnterior()">Anterior</button>
+                <span>PÃ¡gina {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
+                <button :disabled="paginaMeta.last" @click="paginaSiguiente()">Siguiente</button>
+            </div>
+
+            <div v-show="showNoEvent">
+                <img src="../img/no_hay_eventos.jpg" alt="no hay evento">
+                <p v-if="searchText">No se encontraron eventos para
+                    "<strong>{{searchText}}</strong>".</p>
+            </div>
+
+            <div v-show="showFavoritos">
+                <h2>Mis favoritos</h2>
+                <div class="mostrar_evento" v-for="ev in favoritosEventos" :key="ev.id">
+                    <div class="cartel">
+                        <p>Cartel (clic para ampliar)
+                            <button @click="toggleFavorito(ev)" class="fav-btn" :title="esFavorito(ev.id) ? 'Quitar de favoritos' : 'Marcar como favorito'">{{ esFavorito(ev.id) ? "â˜…" : "â˜†" }}</button>
+                        </p>
+                        <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
+                    </div>
+                    <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                    <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
+                        <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
+                            @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
+                            :alt="'Foto ' + (o + 1) + ' del evento'" style="max-height: 60px; cursor: zoom-in;">
+                    </div>
+                    <div class="datos_eventos">
+                        <p>Fecha: <br>{{formatDate(ev.date)}}</p>
+                        <p v-if="formatRango(ev)">Rango: <br>{{formatRango(ev)}}</p>
+                        <p v-if="ev.horaInicio">Horario: <br>{{formatHorario(ev)}}</p>
+                        <p>Establecimiento: <br>{{ev.establishment}}</p>
+                        <p>Domicilio: <br>{{ev.address}}</p>
+                        <p>Evento principal: <br>{{ev.content}}</p>
+                        <p v-if="ev.etiquetas && ev.etiquetas.length">Etiquetas: <br>{{ev.etiquetas.join(", ")}}</p>
+                        <p v-if="ev.telefono">📞 <a :href="telHref(ev.telefono)">{{ev.telefono}}</a></p>
+                        <p v-if="ev.urlEvento">🔗 <a :href="ev.urlEvento" target="_blank" rel="noopener">Más información</a></p>
+                        <div v-if="ev.redes && ev.redes.length" class="redes-evento">
+                            <a v-for="r in ev.redes" :key="r.red" :href="r.url" target="_blank" rel="noopener" :title="r.red" class="red-evento-link">{{textoRed(r.red)}}</a>
+                        </div>
+                    </div>
+                    <div class="mapa">
+                        <p>UbicaciÃ³n</p>
+                        <div v-html="ev.map"></div>
+                    </div>
+                </div>
+                <div class="paginacion" v-show="paginaMeta.totalPages > 1">
+                    <button :disabled="paginaMeta.first" @click="paginaAnterior()">Anterior</button>
+                    <span>PÃ¡gina {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
+                    <button :disabled="paginaMeta.last" @click="paginaSiguiente()">Siguiente</button>
+                </div>
+                <div v-show="favoritosEventos.length === 0">
+                    <img src="../img/no_hay_favoritos.jpg" alt="sin favoritos">
+                    <p>TodavÃ­a no tienes favoritos. Marca la estrella â˜† en cualquier evento.</p>
+                </div>
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showPerfil">
+                <h3>Mi perfil</h3>
+                <label>Nombre</label>
+                <input type="text" v-model="perfilNombre"><br>
+                <label>Apellidos</label>
+                <input type="text" v-model="perfilApellidos"><br>
+                <label>TelÃ©fono (obligatorio)</label>
+                <input type="tel" v-model="perfilTelefono"><br>
+                <button @click="guardarPerfil(false)">Guardar</button>
+                <button @click="cerrarPerfil()">Cerrar</button>
+                <p v-if="perfilError" style="color: red;">{{perfilError}}</p>
+                <p v-if="perfilOk" style="color: green;">Guardado.</p>
+            </div>
+
+            <div class="mostrar_ingresar" v-show="showPanel">
+                <h3>Mi panel</h3>
+                <p>Hola, {{sesionNombre}}</p>
+                <p>PrÃ³ximos eventos: <strong>{{statProximos}}</strong>
+                    <button @click="volverBuscar()">Verlos</button></p>
+                <p>Mis favoritos: <strong>{{statFavs}}</strong>
+                    <button @click="verFavoritos()">Verlos</button></p>
+                <button @click="irAPerfil()">Editar mis datos</button>
+                <button @click="cerrarPanel()">Cerrar panel</button>
+            </div>
+
             <div v-if="lightboxSrc" class="lightbox" @click="closeLightbox">
-                <img :src="lightboxSrc" alt="cartel ampliado">
+                <img :src="lightboxSrc" :alt="lightboxAlt" @error="onLightboxError">
             </div>
         </main>
+
+        <p v-show="arrancando" class="cargando" role="status">Cargandoâ€¦</p>
+
+        <footer class="footer">
+            <div class="footer-cols">
+                <div class="footer-col">
+                    <h3>AsociaciÃ³n Cultural Puertollano</h3>
+                    <p>Promoviendo la cultura y el arte<br>en nuestra ciudad desde 1985.</p>
+                </div>
+                <div class="footer-col">
+                    <h3>Contacto</h3>
+                    <p>
+                        ðŸ“ Calle Mayor, 12 â€” 13500 Puertollano, Ciudad Real<br>
+                        ðŸ“ž <a href="tel:+34926123456">+34 926 123 456</a><br>
+                        âœ‰ï¸ <a href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h3>SÃ­guenos</h3>
+                    <div class="footer-social">
+                        <a href="#" target="_blank" rel="noopener" title="Facebook">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="Instagram">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="X (Twitter)">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        <a href="#" target="_blank" rel="noopener" title="YouTube">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <p class="footer-copy">Â© 2024â€“2025 AsociaciÃ³n Cultural Puertollano Â· Todos los derechos reservados</p>
+        </footer>
     </div>
 
-    <script src="../lib/vue.global.js"></script>
-    <script src="../js/eventos.js"></script>
+    <script type="module" src="../js/pages/invitado.js"></script>
 </body>
 </html>

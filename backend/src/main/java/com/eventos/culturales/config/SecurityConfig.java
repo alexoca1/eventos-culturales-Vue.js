@@ -59,6 +59,8 @@ public class SecurityConfig {
                             String path = request.getServletPath()
                                     + (pathInfo != null ? pathInfo : "");
                             if ("/eventos".equals(path)) return true;
+                            // Punto 2: el catálogo de etiquetas es público (los filtros lo necesitan sin login)
+                            if ("/etiquetas".equals(path)) return true;
                             // Autenticados (caen a la cadena 2): mios, pendientes y favoritos
                             return path.startsWith("/eventos/")
                                     && !"/eventos/mios".equals(path)

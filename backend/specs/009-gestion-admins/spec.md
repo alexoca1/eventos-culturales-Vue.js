@@ -2,7 +2,7 @@
 
 **Feature Branch**: `009-gestion-admins`
 **Created**: 2026-09-18
-**Status**: Implemented (2026-09-22, 107/107 tests en verde; ver tasks.md)
+**Status**: Implemented (2026-09-22, ver tasks.md; rol único del punto 1 aplicado el 2026-09-24, suite actual 152/152 en verde)
 **Input**: El admin hoy no puede editar usuarios (ni roles ni estado). Se necesita para poder ascender a ROLE_ORGANIZADOR y para desactivar cuentas problemáticas. GET /auth/usuarios tampoco expone `enabled`.
 
 ## User Scenarios & Testing
@@ -17,15 +17,15 @@
 
 ---
 
-### User Story 2 - Admin edita roles y estado de un usuario (Priority: P1)
-Un admin puede cambiar los roles de cualquier usuario (excepto los suyos propios en ciertos casos, ver Historia 3) y activar/desactivar su cuenta.
+### User Story 2 - Admin edita el rol y estado de un usuario (Priority: P1)
+Un admin puede cambiar el rol de cualquier usuario (excepto el suyo propio en ciertos casos, ver Historia 3) y activar/desactivar su cuenta. Cada usuario tiene exactamente un único rol.
 
 **Independent Test**: `PUT /auth/usuarios/{id}` con `{"roles": ["ROLE_ORGANIZADOR"], "enabled": true}` sobre un usuario `ROLE_USER` → pasa a `ROLE_ORGANIZADOR`.
 
 **Acceptance Scenarios**:
 1. **Given** admin autenticado y un usuario `ROLE_USER`, **When** `PUT /auth/usuarios/{id}` con `roles=["ROLE_ORGANIZADOR"]`, **Then** el usuario pasa a tener ese rol (puede loguearse y usar el panel de organizador).
 2. **Given** admin autenticado, **When** `PUT /auth/usuarios/{id}` con `enabled=false`, **Then** ese usuario ya no puede autenticarse (`login` devuelve 401/403 — reutiliza el mecanismo ya existente de `UserDetails.isEnabled()`).
-3. **Given** admin autenticado, **When** envía `roles=[]` (vacío) o un valor fuera de `ROLE_USER/ROLE_ORGANIZADOR/ROLE_ADMIN`, **Then** 400.
+3. **Given** admin autenticado, **When** envía `roles=[]` (vacío), más de un rol (ej. `["ROLE_USER","ROLE_ADMIN"]`) o un valor fuera de `ROLE_USER/ROLE_ORGANIZADOR/ROLE_ADMIN`, **Then** 400.
 4. **Given** un usuario `ROLE_ORGANIZADOR` (no admin), **When** intenta llamar a este endpoint, **Then** 403.
 
 ---
@@ -38,20 +38,20 @@ Un admin no puede, mediante este endpoint, desactivarse a sí mismo ni quitarse 
 **Acceptance Scenarios**:
 1. **Given** admin autenticado, **When** `PUT` sobre su propio `id` con `enabled=false`, **Then** 409, sin aplicar el cambio.
 2. **Given** admin autenticado, **When** `PUT` sobre su propio `id` con `roles` que no incluye `ROLE_ADMIN`, **Then** 409, sin aplicar el cambio.
-3. **Given** admin autenticado, **When** `PUT` sobre su propio `id` con `enabled=true` y `roles` incluyendo `ROLE_ADMIN` (sin cambios reales, o añadiendo otro rol adicional), **Then** se acepta (no se bloquea editarse a sí mismo si no compromete su propio acceso de admin).
+3. **Given** admin autenticado, **When** `PUT` sobre su propio `id` con `enabled=true` y `roles` incluyendo `ROLE_ADMIN` (sin cambios reales), **Then** se acepta (no se bloquea editarse a sí mismo si no compromete su propio acceso de admin).
 
 ---
 
 ### Edge Cases
-- Un usuario puede tener varios roles a la vez (ej. `ROLE_ADMIN` + `ROLE_ORGANIZADOR`) — el endpoint no lo impide, aunque no es un caso de uso esperado en el flujo normal.
+- Un usuario tiene exactamente un rol: el endpoint rechaza con 400 cualquier conjunto con ≠1 rol. Si un usuario legacy tuviera varios roles en BD, el admin lo normaliza a uno al editarlo (el frontend preselecciona el primero).
 - Cambiar los roles de un usuario que tiene eventos creados (`Evento.creadoPor`) no afecta a esos eventos ya existentes ni a su historial.
 
 ## Requirements
 
 ### Functional Requirements
 - **FR-001**: `GET /auth/usuarios` MUST incluir `enabled` en cada elemento devuelto.
-- **FR-002**: `PUT /auth/usuarios/{id}` (solo `ROLE_ADMIN`) MUST permitir actualizar `roles` (conjunto no vacío, valores dentro de `ROLE_USER, ROLE_ORGANIZADOR, ROLE_ADMIN`) y `enabled` (boolean).
-- **FR-003**: El sistema MUST rechazar con 400 un `roles` vacío o con valores fuera de la lista permitida.
+- **FR-002**: `PUT /auth/usuarios/{id}` (solo `ROLE_ADMIN`) MUST permitir actualizar `roles` (exactamente un rol, valor dentro de `ROLE_USER, ROLE_ORGANIZADOR, ROLE_ADMIN`) y `enabled` (boolean).
+- **FR-003**: El sistema MUST rechazar con 400 un `roles` vacío, con más de un rol o con valores fuera de la lista permitida.
 - **FR-004**: El sistema MUST rechazar con 409 cualquier intento de un admin de desactivarse a sí mismo o quitarse su propio `ROLE_ADMIN` mediante este endpoint.
 - **FR-005**: Un usuario sin `ROLE_ADMIN` MUST recibir 403 al llamar a este endpoint.
 

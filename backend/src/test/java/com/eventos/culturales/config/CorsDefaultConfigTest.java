@@ -38,6 +38,13 @@ class CorsDefaultConfigTest {
     @MockitoBean
     private EmailService emailService;
 
+    @MockitoBean
+    private com.eventos.culturales.repositories.EtiquetaRepository etiquetaRepository;
+
+    // 015 US2: dependencia del constructor de EventoController (galería de fotos)
+    @MockitoBean
+    private com.eventos.culturales.repositories.FotoGaleriaRepository fotoGaleriaRepository;
+
     // @EnableJpaAuditing exige JpaMappingContext, ausente en el slice @WebMvcTest
     @MockitoBean
     private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMetamodelMappingContext;

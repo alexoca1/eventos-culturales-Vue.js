@@ -116,7 +116,8 @@ Vue.createApp({
                 horaInicio: e.horaInicio || null,
                 horaFin: e.horaFin || null,
                 fechaFin: e.fechaFin || e.fecha,
-                poster: `<img src="${API}/eventos/${e.id}/cartel" alt="evento imagen" style="max-width: 400px; max-height: 400px;">`,
+                // Sin cartel en BD el src da 404: fallback al banner de portada.
+                poster: `<img src="${API}/eventos/${e.id}/cartel" alt="evento imagen" style="max-width: 400px; max-height: 400px;" onerror="this.onerror=null;this.src='../img/evento_portada.jpg'">`,
                 map: e.mapaEmbed || ""
             };
         },
