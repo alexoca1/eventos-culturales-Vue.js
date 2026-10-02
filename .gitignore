@@ -20,6 +20,7 @@ yarn-error.log*
 # Archivos de construcción (si se agregan en el futuro)
 dist/
 build/
+target/
 
 # Archivos de entorno
 .env
