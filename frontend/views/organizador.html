@@ -9,14 +9,14 @@
 <body>
     <div id="eventos" v-cloak>
         <header class="header-bar">
-            <h1><a class="titulo-inicio" href="../index.html" @click.prevent="irAInicio()">PÃ¡gina de Eventos Culturales en Puertollano</a></h1>
+            <h1><a class="titulo-inicio" href="../index.html" @click.prevent="irAInicio()">Página de Eventos Culturales en Puertollano</a></h1>
             <template v-if="!arrancando">
                 <div class="sesion" v-if="tieneSesion()">
                     <button @click="alternarMenu()">{{sesionNombre || 'Mi cuenta'}}</button>
                     <div v-show="menuAbierto" class="menu-sesion">
                         <button @click="irAPanel()">Mi panel</button>
                         <button @click="irAPerfil()">Editar mis datos</button>
-                        <button @click="logout()">Cerrar sesiÃ³n</button>
+                        <button @click="logout()">Cerrar sesión</button>
                     </div>
                 </div>
                 <a v-else class="sesion-entrar" href="../index.html">Ingresar</a>
@@ -67,9 +67,9 @@
                 <div class="evento-row" v-for="event in misEventos" :key="event.id">
                     <div class="evento-thumb" v-html="event.poster" @click="openLightbox(event.id)"></div>
                     <div class="evento-info">
-                        <strong>{{formatDate(event.date)}} â€” {{event.establishment}}</strong>
+                        <strong>{{formatDate(event.date)}} — {{event.establishment}}</strong>
                         <span class="badge" :class="'badge-' + (event.estado || '').toLowerCase()">{{textoEstado(event.estado)}}</span><br>
-                        {{event.content}}<span v-if="event.horaInicio"> Â· {{formatHorario(event)}}</span><span v-if="formatRango(event)"> Â· {{formatRango(event)}}</span>
+                        {{event.content}}<span v-if="event.horaInicio"> · {{formatHorario(event)}}</span><span v-if="formatRango(event)"> · {{formatRango(event)}}</span>
                         <br v-if="event.estado === 'RECHAZADO' && event.motivoRechazo"><em v-if="event.estado === 'RECHAZADO' && event.motivoRechazo">Motivo: {{event.motivoRechazo}}</em>
                     </div>
                     <div class="evento-acciones">
@@ -79,7 +79,7 @@
                 </div>
                 <div class="paginacion" v-show="misPaginaMeta.totalPages > 1">
                     <button :disabled="misPaginaMeta.first" @click="misPaginaAnterior()">Anterior</button>
-                    <span>PÃ¡gina {{misPaginaActual + 1}} de {{misPaginaMeta.totalPages}} ({{misPaginaMeta.totalElements}} eventos)</span>
+                    <span>Página {{misPaginaActual + 1}} de {{misPaginaMeta.totalPages}} ({{misPaginaMeta.totalElements}} eventos)</span>
                     <button :disabled="misPaginaMeta.last" @click="misPaginaSiguiente()">Siguiente</button>
                 </div>
             </div>
@@ -136,7 +136,7 @@
             </div>
 
             <div class="mostrar_ingresar" v-show="showForm">
-                <h3>{{ editingId ? "Edita tu evento" : "Nuevo evento (quedarÃ¡ pendiente de revisiÃ³n)" }}</h3>
+                <h3>{{ editingId ? "Edita tu evento" : "Nuevo evento (quedará pendiente de revisión)" }}</h3>
                 <form @submit.prevent="previsualizar">
                     <div class="fecha">
                         <label>Ingresar Fecha</label>
@@ -144,7 +144,7 @@
                         <p v-if="errDate" style="color: red;">{{errDate}}</p><br>
                     </div>
                     <div class="fecha">
-                        <label>Fecha fin (opcional, vacÃ­o = un dÃ­a)</label>
+                        <label>Fecha fin (opcional, vacío = un día)</label>
                         <input type="date" v-model="inputFechaFin" style="width: 120px;"><br>
                     </div>
                     <div class="fecha">
@@ -162,9 +162,9 @@
                     <label>Nombre del evento *</label>
                     <input type="text" id="f-nombre" v-model="inputNombre">
                     <p v-if="errNombre" style="color: red;">{{errNombre}}</p><br>
-                    <label>DescripciÃ³n del evento (opcional)</label>
+                    <label>Descripción del evento (opcional)</label>
                     <textarea id="f-descripcion" v-model="inputDescripcion" rows="4" style="width: 100%"
-                        placeholder="CuÃ©ntanos con mÃ¡s detalle de quÃ© va el evento"></textarea><br>
+                        placeholder="Cuéntanos con más detalle de qué va el evento"></textarea><br>
                     <label>Etiquetas (sin marcar = Otra)</label>
                     <label v-for="t in etiquetasDisponibles" :key="t.id">
                         <input type="checkbox" :value="t.nombre" v-model="inputEtiquetas"> {{t.nombre}}
@@ -176,7 +176,7 @@
                     </div>
                     <p v-if="errCartel" style="color: red;">{{errCartel}}</p><br>
                     <div v-html="inputPoster" v-if="inputPoster"></div>
-                    <label>GalerÃ­a de fotos (opcional, hasta 5)</label>
+                    <label>Galería de fotos (opcional, hasta 5)</label>
                     <p class="nota">Cada hueco es una foto. Si editas un evento, quitar una foto la borra al guardar.</p>
                     <div class="galeria-slots">
                         <div class="galeria-slot" v-for="orden in galeriaSlots" :key="orden"
@@ -186,7 +186,7 @@
                             <img v-if="slotOcupado(orden)" :src="slotPreview(orden)" class="galeria-slot-preview"
                                 alt="Miniatura de la foto {{ orden + 1 }}">
                             <button type="button" class="galeria-slot-quitar" v-if="slotOcupado(orden)"
-                                @click="quitarFotoGaleria(orden)" :aria-label="'Quitar la foto ' + (orden + 1)">Ã—</button>
+                                @click="quitarFotoGaleria(orden)" :aria-label="'Quitar la foto ' + (orden + 1)">×</button>
                         </div>
                     </div><br>
                     <label>Teléfono de contacto (opcional)</label>
@@ -210,15 +210,15 @@
                         <button type="button" @click="quitarRed(i)">×</button>
                     </div><br>
                     <label>Ingresar Mapa</label>
-                    <textarea v-model="inputMap" placeholder="Pega aquÃ­ el cÃ³digo iframe de Google Maps" rows="4" style="width: 100%"></textarea>
-                    <p><strong>Paso 1 de 2:</strong> previsualiza cÃ³mo quedarÃ¡ tu evento; despuÃ©s podrÃ¡s confirmarlo.</p>
+                    <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
+                    <p><strong>Paso 1 de 2:</strong> previsualiza cómo quedará tu evento; después podrás confirmarlo.</p>
                     <button type="submit">Previsualizar antes de confirmar</button>
                     <button type="button" @click="cancelForm(); showMisEventos = true">Cancelar</button>
                 </form>
             </div>
 
             <div v-show="showPreview" v-if="previewEv">
-                <h3>AsÃ­ quedarÃ¡ publicado tu evento</h3>
+                <h3>Así quedará publicado tu evento</h3>
                 <div class="mostrar_evento">
                     <div class="cartel">
                         <p>Cartel</p>
@@ -231,7 +231,7 @@
                         <p>Establecimiento: <br>{{previewEv.establishment}}</p>
                         <p>Domicilio: <br>{{previewEv.address}}</p>
                         <p>Evento principal: <br>{{previewEv.content}}</p>
-                        <p v-if="previewEv.description">DescripciÃ³n: <br>{{previewEv.description}}</p>
+                        <p v-if="previewEv.description">Descripción: <br>{{previewEv.description}}</p>
                         <p v-if="previewEv.etiquetas && previewEv.etiquetas.length">Etiquetas: <br>{{previewEv.etiquetas.join(", ")}}</p>
                         <p v-if="previewEv.telefono">📞 <a :href="telHref(previewEv.telefono)">{{previewEv.telefono}}</a></p>
                         <p v-if="previewEv.urlEvento">🔗 <a :href="previewEv.urlEvento" target="_blank" rel="noopener">Más información</a></p>
@@ -240,15 +240,15 @@
                         </div>
                     </div>
                     <div class="mapa">
-                        <p>UbicaciÃ³n</p>
+                        <p>Ubicación</p>
                         <div v-html="previewEv.map"></div>
                     </div>
                 </div>
                 <div class="aviso-revision">
-                    <strong>{{ editingId ? "Esta ediciÃ³n quedarÃ¡ pendiente de revisiÃ³n. El evento dejarÃ¡ de ser visible al pÃºblico hasta que se apruebe." : "Este evento quedarÃ¡ pendiente de revisiÃ³n. Un administrador debe aprobarlo antes de que sea visible al pÃºblico." }}</strong>
+                    <strong>{{ editingId ? "Esta edición quedará pendiente de revisión. El evento dejará de ser visible al público hasta que se apruebe." : "Este evento quedará pendiente de revisión. Un administrador debe aprobarlo antes de que sea visible al público." }}</strong>
                 </div>
                 <button @click="volverAEditar">Volver a editar</button>
-                <button @click="confirmarEnvio">Paso 2 de 2: Confirmar y enviar a revisiÃ³n</button>
+                <button @click="confirmarEnvio">Paso 2 de 2: Confirmar y enviar a revisión</button>
             </div>
 
             <div v-show="showEventSaved">
@@ -261,14 +261,14 @@
                 <input type="text" v-model="perfilNombre"><br>
                 <label>Apellidos</label>
                 <input type="text" v-model="perfilApellidos"><br>
-                <label>TelÃ©fono (obligatorio)</label>
+                <label>Teléfono (obligatorio)</label>
                 <input type="tel" v-model="perfilTelefono"><br>
-                <h4>Mi organizaciÃ³n</h4>
-                <label>Nombre de la organizaciÃ³n (obligatorio)</label>
+                <h4>Mi organización</h4>
+                <label>Nombre de la organización (obligatorio)</label>
                 <input type="text" v-model="perfilOrgNombre"><br>
                 <label>Encargado: nombre (obligatorio)</label>
                 <input type="text" v-model="perfilEncNombre"><br>
-                <label>Encargado: telÃ©fono (obligatorio)</label>
+                <label>Encargado: teléfono (obligatorio)</label>
                 <input type="tel" v-model="perfilEncTelefono"><br>
                 <label>Encargado: correo (obligatorio)</label>
                 <input type="email" v-model="perfilEncEmail"><br>
@@ -281,12 +281,12 @@
             <div class="mostrar_ingresar" v-show="showPanel">
                 <h3>Mi panel</h3>
                 <p>Hola, {{sesionNombre}}</p>
-                <p>Mis eventos â€” Aprobados: <strong>{{statAprobados}}</strong>
-                    Â· En revisiÃ³n: <strong>{{statPendientesRev}}</strong>
-                    Â· Rechazados: <strong>{{statRechazados}}</strong>
-                    Â· Por eliminar: <strong>{{statPendientesElim}}</strong></p>
-                <p>PrÃ³ximos en cartelera: <strong>{{statProximos}}</strong>
-                    <a href="usuarioEstandar.html">Ver cartelera pÃºblica</a></p>
+                <p>Mis eventos — Aprobados: <strong>{{statAprobados}}</strong>
+                    · En revisión: <strong>{{statPendientesRev}}</strong>
+                    · Rechazados: <strong>{{statRechazados}}</strong>
+                    · Por eliminar: <strong>{{statPendientesElim}}</strong></p>
+                <p>Próximos en cartelera: <strong>{{statProximos}}</strong>
+                    <a href="usuarioEstandar.html">Ver cartelera pública</a></p>
                 <button @click="addEvent()">Nuevo evento</button>
                 <button @click="irAPerfil()">Editar mis datos</button>
                 <button @click="cerrarPanel()">Cerrar panel</button>
@@ -296,15 +296,15 @@
                 <img :src="lightboxSrc" :alt="lightboxAlt" @error="onLightboxError">
             </div>
             <div v-show="showProximos" id="lista-proximos">
-                <h2>PrÃ³ximos eventos (cartelera pÃºblica)</h2>
+                <h2>Próximos eventos (cartelera pública)</h2>
                 <p>Eventos aprobados y vigentes, ordenados por fecha.</p>
-                <button @click="showProximos = false">â† Volver al panel</button>
+                <button @click="showProximos = false">← Volver al panel</button>
                 <div class="mostrar_evento" v-for="ev in proximosEventos" :key="ev.id">
                     <div class="cartel">
                         <p>Cartel (clic para ampliar)</p>
                         <div v-html="ev.poster" @click="openLightbox(ev.id)" style="cursor: zoom-in;"></div>
                     </div>
-                    <!-- 019: miniaturas de galerÃ­a bajo el cartel -->
+                    <!-- 019: miniaturas de galería bajo el cartel -->
                     <div class="galeria-miniaturas" v-if="ev.galeriaIndices && ev.galeriaIndices.length">
                         <img v-for="o in ev.galeriaIndices" :key="o" :src="galeriaUrl(ev.id, o)"
                             @click="openLightbox(galeriaUrl(ev.id, o), 'Foto ' + (o + 1) + ' del evento')"
@@ -325,36 +325,36 @@
                         </div>
                     </div>
                     <div class="mapa">
-                        <p>UbicaciÃ³n</p>
+                        <p>Ubicación</p>
                         <div v-html="ev.map"></div>
                     </div>
                 </div>
                 <div class="paginacion" v-show="paginaMeta.totalPages > 1">
                     <button :disabled="paginaMeta.first" @click="paginaAnterior()">Anterior</button>
-                    <span>PÃ¡gina {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
+                    <span>Página {{paginaActual + 1}} de {{paginaMeta.totalPages}} ({{paginaMeta.totalElements}} eventos)</span>
                     <button :disabled="paginaMeta.last" @click="paginaSiguiente()">Siguiente</button>
                 </div>
             </div>
         </main>
 
-        <p v-show="arrancando" class="cargando" role="status">Cargandoâ€¦</p>
+        <p v-show="arrancando" class="cargando" role="status">Cargando…</p>
 
         <footer class="footer">
             <div class="footer-cols">
                 <div class="footer-col">
-                    <h3>AsociaciÃ³n Cultural Puertollano</h3>
+                    <h3>Asociación Cultural Puertollano</h3>
                     <p>Promoviendo la cultura y el arte<br>en nuestra ciudad desde 1985.</p>
                 </div>
                 <div class="footer-col">
                     <h3>Contacto</h3>
                     <p>
-                        ðŸ“ Calle Mayor, 12 â€” 13500 Puertollano, Ciudad Real<br>
-                        ðŸ“ž <a href="tel:+34926123456">+34 926 123 456</a><br>
-                        âœ‰ï¸ <a href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>
+                        📍 Calle Mayor, 12 — 13500 Puertollano, Ciudad Real<br>
+                        📞 <a href="tel:+34926123456">+34 926 123 456</a><br>
+                        ✉️ <a href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>
                     </p>
                 </div>
                 <div class="footer-col">
-                    <h3>SÃ­guenos</h3>
+                    <h3>Síguenos</h3>
                     <div class="footer-social">
                         <a href="#" target="_blank" rel="noopener" title="Facebook">
                             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
@@ -371,7 +371,7 @@
                     </div>
                 </div>
             </div>
-            <p class="footer-copy">Â© 2024â€“2025 AsociaciÃ³n Cultural Puertollano Â· Todos los derechos reservados</p>
+            <p class="footer-copy">© 2024–2025 Asociación Cultural Puertollano · Todos los derechos reservados</p>
         </footer>
     </div>
 
