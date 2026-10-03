@@ -42,3 +42,19 @@ coverage/
 # Archivos de caché
 .cache/
 .parcel-cache/
+
+# --- Config local de agentes/herramientas (no versionar) ---
+.opencode/
+.specify/
+.codebase-memory/
+opencode.json
+backend/opencode.json
+frontend/opencode.json
+backend/AGENTS.md
+frontend/AGENTS.md
+
+# --- Vendor de terceros duplicado (el runtime usado es vue.esm-browser.js) ---
+frontend/lib/vue.global.js
+
+# --- Volcados de herramientas ---
+repomix-*
