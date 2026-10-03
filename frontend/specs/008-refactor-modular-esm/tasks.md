@@ -57,17 +57,17 @@
 ---
 
 ## Phase 6: Limpieza + regresión completa
-- [ ] F096 Eliminar `frontend/js/eventos.js` y `frontend/lib/vue.global.js` (ya sin referencias)
-- [ ] F097 `node --check` sobre cada fichero `.js` nuevo
-- [ ] F098 **Checklist de regresión manual — las 8 features de frontend, sin excepción**:
-  - [ ] Login admin/organizador/usuario redirige correctamente según rol
-  - [ ] Registro + login automático funciona
-  - [ ] Invitado: búsqueda por fecha, por categoría, y combinada; lightbox del cartel HD
-  - [ ] Admin: crear/editar/eliminar evento (con y sin cartel, con horario, con rango de días, con categoría)
-  - [ ] Admin: cola de moderación (aprobar/rechazar con motivo)
-  - [ ] Admin: gestión de usuarios (ascender a organizador, activar/desactivar, crear admin, auto-bloqueo bloqueado)
-  - [ ] Organizador: crear con previsualización + confirmación, editar, solicitar eliminación, "Mis eventos" con badges de estado
-  - [ ] Usuario estándar: marcar/desmarcar favorito, "Mis favoritos", cerrar sesión
+- [x] F096 Eliminar `frontend/js/eventos.js` y `frontend/lib/vue.global.js` (ya sin referencias)
+- [x] F097 `node --check` sobre cada fichero `.js` nuevo
+- [x] F098 **Checklist de regresión manual — las 8 features de frontend, sin excepción**:
+  - [x] Login admin/organizador/usuario redirige correctamente según rol
+  - [x] Registro + login automático funciona
+  - [x] Invitado: búsqueda por fecha, por categoría, y combinada; lightbox del cartel HD
+  - [x] Admin: crear/editar/eliminar evento (con y sin cartel, con horario, con rango de días, con categoría)
+  - [x] Admin: cola de moderación (aprobar/rechazar con motivo)
+  - [x] Admin: gestión de usuarios (ascender a organizador, activar/desactivar, crear admin, auto-bloqueo bloqueado)
+  - [x] Organizador: crear con previsualización + confirmación, editar, solicitar eliminación, "Mis eventos" con badges de estado
+  - [x] Usuario estándar: marcar/desmarcar favorito, "Mis favoritos", cerrar sesión
 
 ## Dependencies & Execution Order
 Fase 1 → 2 → 3 → 4 → 5 → 6, estrictamente en ese orden (cada fase depende de que la anterior exista). No se toca ninguna página hasta la Fase 5 — todo lo previo es aditivo y de riesgo bajo.

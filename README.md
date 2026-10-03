@@ -7,13 +7,13 @@ Frontend Vue 3 + backend Spring Boot 4 / MySQL operativos. Contrato API en `docs
 
 ## Estructura
 ```
-frontend/          # app: index.html + views/ + js/eventos.js + css/ + img/ + lib/vue.global.js (consume la API)
+frontend/          # app: index.html + views/ + js/ (módulos ESM: api/ composables/ pages/ ui/ store.js) + css/ + img/ + lib/vue.esm-browser.js (consume la API)
 backend/           # API REST Spring Boot (ver backend/specs/001-eventos-crud/)
 docs/api-contract.md  # contrato API vigente
 ```
 
 ## Stack frontend
-HTML5 + CSS3 + JS, Vue 3 global local (`frontend/lib/vue.global.js`). Sin build, sin npm. Una sola app Vue en `frontend/js/eventos.js` montada en `#eventos`, compartida por las 3 páginas. Datos vía `fetch` contra la API (`http://localhost:8081` en local; `RENDER_API` en producción).
+HTML5 + CSS3 + JS con módulos ES nativos, Vue 3 ESM vendorizado en `frontend/lib/vue.esm-browser.js`. Sin build, sin npm. Un entrypoint por página en `frontend/js/pages/` (`login`, `invitado`, `admin`, `organizador`) que importa capas reutilizables: `api/` (fetch/auth), `composables/` (estado y lógica por dominio), `ui/` (helpers puros) y `store.js`. Datos vía `fetch` contra la API (`http://localhost:8081` en local; `RENDER_API` en producción).
 
 ## Roles
 - **Invitado** (`frontend/views/usuarioEstandar.html`): entra directo desde `frontend/index.html`, elige fecha en `input[type=date]` y ve la lista de eventos del día (cartel clicable con lightbox HD, fecha, establecimiento, domicilio, evento principal y mapa embebido). Si no hay eventos, imagen de aviso.
