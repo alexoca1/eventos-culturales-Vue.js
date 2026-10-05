@@ -1,22 +1,27 @@
+/* SPDX-License-Identifier: MIT */
+
 /* variables.css — sistema de variables CSS (009-css-variables).
  * Paleta, espaciados, radios, sombras y tipografía centralizados en :root.
  * Se carga ANTES que eventos.css / index.css en las 4 páginas. */
 
 :root {
-    /* Marca */
-    --color-primary: #ff6347;
-    --color-primary-hover: #e53900;
+    /* Marca. Todos los tokens de texto/fondo de esta seccion se eligieron con
+     * ratio >= 4.5:1 (WCAG 2.2 AA) contra el color con el que se usan: el
+     * tomate con texto blanco (cabecera, pie y botones) y el texto sobre el
+     * azul de fondo. El contraste se verifica en js/ui/contraste.check.js. */
+    --color-primary: #d63600;          /* 4.79:1 con blanco */
+    --color-primary-hover: #ad2c00;    /* 6.69:1 con blanco */
     --color-secondary: #ffa07a;
     --color-bg: #1894ff;
     --color-surface: #ffffff;
     --color-border: #ccc;
-    --color-text: #333;
-    --color-text-muted: #999;
+    --color-text: #1f1f1f;             /* 5.27:1 sobre --color-bg */
+    --color-text-muted: #6e6e6e;       /* 5.10:1 sobre blanco */
 
-    /* Estado (badges de moderación) */
-    --color-estado-pendiente: #ff9800;
-    --color-estado-aprobado: #4caf50;
-    --color-estado-rechazado: #f44336;
+    /* Estado (badges de moderación, texto blanco) */
+    --color-estado-pendiente: #a85600; /* 5.26:1 */
+    --color-estado-aprobado: #1e7a2f;  /* 5.41:1 */
+    --color-estado-rechazado: #c62828; /* 5.62:1 */
     --color-estado-eliminacion: #9c27b0;
 
     /* Rol (badges de gestión de usuarios) */
@@ -24,8 +29,8 @@
     --color-rol-organizador: #1976d2;
     --color-rol-user: #616161;
 
-    /* Favorito */
-    --color-favorito: #e6a817;
+    /* Favorito (icono sobre la tarjeta blanca) */
+    --color-favorito: #8a6100;
 
     /* Espaciados */
     --space-xs: 0.25em;

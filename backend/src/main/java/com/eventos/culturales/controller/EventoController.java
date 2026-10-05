@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.controller;
 
 import com.eventos.culturales.dto.EventoDTO;
+import com.eventos.culturales.dto.EventoResponseDTO;
 import com.eventos.culturales.dto.RechazoRequest;
 import com.eventos.culturales.dto.RedSocialDTO;
 import com.eventos.culturales.entities.EstadoEvento;
@@ -93,45 +96,45 @@ public class EventoController {
                         .body(Map.of("error", "El parámetro q debe tener entre 2 y 100 caracteres"));
             }
             if (isAdmin(authentication)) {
-                return ResponseEntity.ok(eventoRepository.buscarPorTexto(qEscapado, paginacion));
+                return ok(eventoRepository.buscarPorTexto(qEscapado, paginacion));
             }
-            return ResponseEntity.ok(eventoRepository.buscarPorTextoYEstado(
+            return ok(eventoRepository.buscarPorTextoYEstado(
                     qEscapado, EstadoEvento.APROBADO, paginacion));
         }
         if (isAdmin(authentication)) {
             if (soloFuturos) {
-                return ResponseEntity.ok(tags.isEmpty()
+                return ok(tags.isEmpty()
                         ? eventoRepository.findFuturos(hoy, paginacion)
                         : eventoRepository.findFuturosPorEtiquetas(hoy, tags, paginacion));
             }
             if (fecha != null && !tags.isEmpty()) {
-                return ResponseEntity.ok(eventoRepository.findVigentesEnPorEtiquetas(fecha, tags));
+                return ok(eventoRepository.findVigentesEnPorEtiquetas(fecha, tags));
             }
             if (fecha != null) {
-                return ResponseEntity.ok(eventoRepository.findVigentesEn(fecha));
+                return ok(eventoRepository.findVigentesEn(fecha));
             }
             if (!tags.isEmpty()) {
-                return ResponseEntity.ok(eventoRepository.findDistinctByEtiquetasNombreInOrderByIdAsc(tags, paginacion));
+                return ok(eventoRepository.findDistinctByEtiquetasNombreInOrderByIdAsc(tags, paginacion));
             }
-            return ResponseEntity.ok(eventoRepository.findAllByOrderByFechaAscIdAsc(paginacion));
+            return ok(eventoRepository.findAllByOrderByFechaAscIdAsc(paginacion));
         }
         if (soloFuturos) {
-            return ResponseEntity.ok(tags.isEmpty()
+            return ok(tags.isEmpty()
                     ? eventoRepository.findFuturosPorEstado(EstadoEvento.APROBADO, hoy, paginacion)
                     : eventoRepository.findFuturosPorEstadoYEtiquetas(EstadoEvento.APROBADO, hoy, tags, paginacion));
         }
         if (fecha != null && !tags.isEmpty()) {
-            return ResponseEntity.ok(eventoRepository.findVigentesEnPorEstadoYEtiquetas(
+            return ok(eventoRepository.findVigentesEnPorEstadoYEtiquetas(
                     EstadoEvento.APROBADO, fecha, tags));
         }
         if (fecha != null) {
-            return ResponseEntity.ok(eventoRepository.findVigentesEnPorEstado(EstadoEvento.APROBADO, fecha));
+            return ok(eventoRepository.findVigentesEnPorEstado(EstadoEvento.APROBADO, fecha));
         }
         if (!tags.isEmpty()) {
-            return ResponseEntity.ok(eventoRepository.findDistinctByEstadoAndEtiquetasNombreInOrderByIdAsc(
+            return ok(eventoRepository.findDistinctByEstadoAndEtiquetasNombreInOrderByIdAsc(
                     EstadoEvento.APROBADO, tags, paginacion));
         }
-        return ResponseEntity.ok(eventoRepository.findByEstadoOrderByFechaAscIdAsc(EstadoEvento.APROBADO, paginacion));
+        return ok(eventoRepository.findByEstadoOrderByFechaAscIdAsc(EstadoEvento.APROBADO, paginacion));
     }
 
     // ?etiquetas= (o ?etiquetas sin valor) = sin filtro; el resto se usa tal cual (ANY).
@@ -151,7 +154,7 @@ public class EventoController {
     // Público (cadena 1 de SecurityConfig), pero un evento no APROBADO solo lo ven
     // el admin y el organizador dueño (010: no se confirma que el id existe → 404)
     @GetMapping("/eventos/{id}")
-    public ResponseEntity<Evento> findById(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<EventoResponseDTO> findById(@PathVariable Long id, Authentication authentication) {
         Evento evento = eventoRepository.findById(id).orElse(null);
         if (evento == null) {
             return ResponseEntity.notFound().build();
@@ -163,7 +166,7 @@ public class EventoController {
         if (evento.getEstado() != EstadoEvento.APROBADO && !isAdmin(authentication) && !dueno) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(evento);
+        return ok(evento);
     }
 
     @PostMapping(value = "/eventos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -209,7 +212,8 @@ public class EventoController {
             evento.setCreadoPor(organizador);
         }
         evento.setMotivoRechazo(null);
-        return ResponseEntity.status(HttpStatus.CREATED).body(eventoRepository.save(evento));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(EventoResponseDTO.fromEntity(eventoRepository.save(evento)));
     }
 
     @PutMapping(value = "/eventos/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -236,7 +240,7 @@ public class EventoController {
                         aplicar(dto, file, fileHd, evento);
                         evento.setEstado(EstadoEvento.APROBADO);
                         evento.setMotivoRechazo(null);
-                        return ResponseEntity.ok(eventoRepository.save(evento));
+                        return ok(eventoRepository.save(evento));
                     }
                     // Organizador: solo el dueño, y nunca lo pendiente de borrar
                     if (evento.getCreadoPor() == null
@@ -250,7 +254,7 @@ public class EventoController {
                     }
                     aplicar(dto, file, fileHd, evento);
                     evento.setEstado(EstadoEvento.PENDIENTE_REVISION);
-                    return ResponseEntity.ok(eventoRepository.save(evento));
+                    return ok(eventoRepository.save(evento));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -274,7 +278,7 @@ public class EventoController {
                                 .body(Map.of("error", "Solo puedes eliminar tus propios eventos"));
                     }
                     evento.setEstado(EstadoEvento.PENDIENTE_ELIMINACION);
-                    return ResponseEntity.ok(eventoRepository.save(evento));
+                    return ok(eventoRepository.save(evento));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -512,15 +516,15 @@ public class EventoController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Usuario autenticado no encontrado"));
         }
-        return ResponseEntity.ok(eventoRepository.findByCreadoPorOrderByIdAsc(organizador,
+        return ok(eventoRepository.findByCreadoPorOrderByIdAsc(organizador,
                 org.springframework.data.domain.PageRequest.of(page, pageSize)));
     }
 
     // 007 US2: cola de moderación (revisiones + eliminaciones pendientes), solo admin
     @GetMapping("/eventos/pendientes")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Evento>> pendientes() {
-        return ResponseEntity.ok(eventoRepository.findByEstadoInOrderByIdAsc(
+    public ResponseEntity<List<EventoResponseDTO>> pendientes() {
+        return ok(eventoRepository.findByEstadoInOrderByIdAsc(
                 List.of(EstadoEvento.PENDIENTE_REVISION, EstadoEvento.PENDIENTE_ELIMINACION)));
     }
 
@@ -545,7 +549,7 @@ public class EventoController {
                     Evento guardado = eventoRepository.save(evento);
                     notificar(evento, "Tu evento ha sido APROBADO",
                             "Tu evento '" + evento.getDescripcion() + "' ya es visible en la web.");
-                    return ResponseEntity.ok(guardado);
+                    return ok(guardado);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -559,7 +563,7 @@ public class EventoController {
                 .map(evento -> {
                     if (evento.getEstado() == EstadoEvento.PENDIENTE_ELIMINACION) {
                         evento.setEstado(EstadoEvento.APROBADO);
-                        return ResponseEntity.ok(eventoRepository.save(evento));
+                        return ok(eventoRepository.save(evento));
                     }
                     if (evento.getEstado() != EstadoEvento.PENDIENTE_REVISION) {
                         return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -572,7 +576,7 @@ public class EventoController {
                             + (evento.getMotivoRechazo() != null && !evento.getMotivoRechazo().isBlank()
                                     ? " Motivo: " + evento.getMotivoRechazo() : "");
                     notificar(evento, "Tu evento ha sido RECHAZADO", cuerpo);
-                    return ResponseEntity.ok(guardado);
+                    return ok(guardado);
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -616,7 +620,7 @@ public class EventoController {
                 .stream()
                 .map(Favorito::getEvento)
                 .toList();
-        return ResponseEntity.ok(eventos);
+        return ok(eventos);
     }
 
     // 008 US1: marcar favorito (idempotente; solo sobre APROBADO para no exponer otros estados)
@@ -661,6 +665,25 @@ public class EventoController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // 017 FR-001: ninguna respuesta sale con la entidad Evento (creadoPor traía el
+    // Usuario completo: teléfono, apellidos, encargado, roles...). Las sobrecargas
+    // resuelven en tiempo de compilación por el tipo estático de cada argumento.
+    // null-safe: ResponseEntity.ok(null) era el comportamiento previo y debe seguir
+    // siéndolo (un @MockitoBean sin stub devuelve null en el slice @WebMvcTest).
+    private static ResponseEntity<EventoResponseDTO> ok(Evento evento) {
+        return ResponseEntity.ok(evento == null ? null : EventoResponseDTO.fromEntity(evento));
+    }
+
+    private static ResponseEntity<org.springframework.data.domain.Page<EventoResponseDTO>> ok(
+            org.springframework.data.domain.Page<Evento> pagina) {
+        return ResponseEntity.ok(pagina == null ? null : pagina.map(EventoResponseDTO::fromEntity));
+    }
+
+    private static ResponseEntity<List<EventoResponseDTO>> ok(List<Evento> eventos) {
+        return ResponseEntity.ok(eventos == null ? null
+                : eventos.stream().map(EventoResponseDTO::fromEntity).toList());
+    }
+
     // 007: helpers de rol y usuario autenticado
     private boolean isAdmin(Authentication authentication) {
         return authentication != null && authentication.getAuthorities().stream()
@@ -690,7 +713,31 @@ public class EventoController {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "El cartel no puede superar 2 MB"));
             }
+            if (!magicBytesValidos(file)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "El archivo no es una imagen válida"));
+            }
         }
         return null;
+    }
+
+    // 017 FR-005: la firma real del fichero, no el Content-Type que declara el navegador
+    // (renombrar un .exe a .jpg ya no basta). JPEG FF D8, PNG 89 50 4E 47, WebP RIFF…WEBP.
+    private static boolean magicBytesValidos(MultipartFile file) {
+        byte[] b;
+        try {
+            b = file.getBytes();
+        } catch (IOException e) {
+            return false;
+        }
+        if (b == null) return false;
+        return switch (file.getContentType()) {
+            case "image/jpeg" -> b.length >= 2 && (b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8;
+            case "image/png" -> b.length >= 4
+                    && (b[0] & 0xFF) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G';
+            case "image/webp" -> b.length >= 12 && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+                    && b[8] == 'W' && b[9] == 'E' && b[10] == 'B' && b[11] == 'P';
+            default -> false;
+        };
     }
 }

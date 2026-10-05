@@ -25,12 +25,16 @@ createApp({
             }
             comprobando.value = false;
             if (!store.token) return;
+            // Esta plantilla también vive en views/login.html: las rutas son
+            // relativas al documento, así que el prefijo depende de dónde estemos.
+            const enViews = window.location.pathname.includes('/views/');
+            const base = enViews ? '' : 'views/';
             if (store.roles.includes("ROLE_ADMIN")) {
-                window.location.href = "views/administrador.html";
+                window.location.href = base + "administrador.html";
             } else if (store.roles.includes("ROLE_ORGANIZADOR")) {
-                window.location.href = "views/organizador.html";
+                window.location.href = base + "organizador.html";
             } else {
-                window.location.href = "views/usuarioEstandar.html";
+                window.location.href = base + "usuarioEstandar.html";
             }
         }
         onMounted(comprobarSesion);

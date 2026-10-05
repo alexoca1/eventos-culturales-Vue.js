@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 // useAuth (F083 de 008-refactor-modular-esm).
 // Envuelve api/auth.js con el estado de la pantalla de login (username, password,
 // showRegister, reg*). Mismas firmas y comportamiento que validateAdmin/register/
@@ -25,6 +27,10 @@ export function useAuth() {
     const regApellidos = ref("");
     const regTelefono = ref(""); // punto 4: obligatorio en el registro
     const regError = ref("");
+    // 021 T212: consentimiento de privacidad + declaración de 14 años o más.
+    // El `required` del input ya frena el submit; el estado se expone por si la
+    // plantilla necesita pintarlo.
+    const regConsentimiento = ref(false);
     // Punto 5: indicador de sesión del header (nombre visible + dropdown)
     const sesionNombre = ref("");
     const menuAbierto = ref(false);
@@ -44,13 +50,18 @@ export function useAuth() {
         // US1 004: redirección según rol (el backend devuelve roles como array)
         const roles = (data.user && data.user.roles) || [];
         setSession(token, { roles });
+        // La plantilla de login también vive en views/login.html: la ruta es
+        // relativa al documento, así que el prefijo depende de dónde estemos
+        // (con "views/administrador.html" desde views/ salía views/views/).
+        const enViews = window.location.pathname.includes('/views/');
+        const base = enViews ? '' : 'views/';
         if (roles.includes("ROLE_ADMIN")) {
-            window.location.href = "views/administrador.html";
+            window.location.href = base + "administrador.html";
         } else if (roles.includes("ROLE_ORGANIZADOR")) {
-            window.location.href = "views/organizador.html";
+            window.location.href = base + "organizador.html";
         } else {
             // US2 006: usuario estándar → vista de invitado, ahora autenticado
-            window.location.href = "views/usuarioEstandar.html";
+            window.location.href = base + "usuarioEstandar.html";
         }
     }
 
@@ -207,11 +218,68 @@ export function useAuth() {
         useVista().irAInicio();
     }
 
+    // RGPD: borrado de la propia cuenta desde el perfil. El backend
+    // (DELETE /auth/perfil) anonimiza email, nombre y teléfono, revoca los tokens
+    // y borra los favoritos; los eventos publicados quedan sin vinculación.
+    // Aquí se pide confirmación, se limpia la sesión local y se va al inicio con el
+    // parámetro que las páginas de acceso leen para mostrar el aviso (paso 4).
+    const confirmarBorrado = ref(false);
+    const borradoError = ref("");
+    const avisoCuentaEliminada = ref(
+        new URLSearchParams(window.location.search || "").get("cuentaEliminada") === "1"
+    );
+
+    function pedirBorrado() {
+        borradoError.value = "";
+        confirmarBorrado.value = true;
+    }
+
+    function cancelarBorrado() {
+        confirmarBorrado.value = false;
+    }
+
+    async function eliminarCuenta() {
+        borradoError.value = "";
+        let r;
+        try {
+            r = await authFetch(`${API}/auth/perfil`, {
+                method: "DELETE",
+                headers: { ...authHeader() },
+                networkAlert: false,
+                authFail: "return"
+            });
+        } catch (e) {
+            borradoError.value = "No se pudo conectar con el servidor. ¿Está arrancado el backend?";
+            return;
+        }
+        if (!r.ok) {
+            // 401 = token caducado: misma salida que en guardarPerfil
+            if (r.status === 401) {
+                await logout();
+                return;
+            }
+            borradoError.value = (r.data && r.data.error) || "No se pudo eliminar la cuenta";
+            return;
+        }
+        clearSession();
+        avisarCierreSesion(); // que las demás pestañas se enteren también
+        // El botón solo existe en views/, así que el inicio es ../index.html
+        window.location.href = "../index.html?cuentaEliminada=1";
+    }
+
     instance = {
         username, password, showRegister,
         regEmail, regPassword, regNombre, regApellidos, regTelefono, regError,
+        regConsentimiento,
         sesionNombre, menuAbierto,
         login, register, logout, tieneSesion, cargarSesion, recuperarSesion, alternarMenu,
+        // 023: se expone porque al cambiar el email el token viejo deja de identificar
+        // al usuario (su `sub` es el email). Quien lo cambie llama a esto para quedarse
+        // con un token nuevo sin sacar al usuario de la pantalla.
+        renovarSesion,
+        // RGPD: borrado de cuenta (confirmación + DELETE) y aviso en el destino
+        confirmarBorrado, borradoError, avisoCuentaEliminada,
+        pedirBorrado, cancelarBorrado, eliminarCuenta,
         irAPanel, irAPerfil, irAInicio
     };
     return instance;

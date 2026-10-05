@@ -44,7 +44,7 @@
 - [x] F187 `node --check` en `api/eventos.js` y `useEventoForm.js`
 - [x] F188 Prueba manual en Chrome 2026-09-29 + ampliaciones 2026-09-30
       (imágenes grandes y carreras: `webify`, `procesandoCartel`); el detalle
-      completo vive en el spec histórico de `019-navegacion-directa-seccion-persistente/`
+      completo vive en este mismo spec (ver *Assumptions*).
 
 ## Phase 5: Redes sociales, teléfono y URL (US4)
 - [x] F189 En `api/eventos.js`, `apiToView()`: añadir `redes: e.redesSociales
@@ -164,5 +164,6 @@
       `node js/ui/vistas.check.js`, `node js/ui/imagenes.check.js` en verde
 - [x] F194 Copiar el spec a `frontend/specs/019-nombre-descripcion-galeria/`
       (spec.md, plan.md, tasks.md) con F181-F192 marcadas y Status Implemented;
-      el folder anterior `019-navegacion-directa-seccion-persistente/` queda como
-      historial (mal nombrado; su contenido es este spec)
+      el folder duplicado mal nombrado que alojaba este spec se retiró el 2026-10-04
+      (idéntico contenido y `plan.md` idéntico a `tasks.md`): su detalle de F188 se
+      consolidó en este spec

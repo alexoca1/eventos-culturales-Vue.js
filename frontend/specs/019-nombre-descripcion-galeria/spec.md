@@ -5,10 +5,10 @@
 **Status**: Implemented (2026-10-02; F181-F192 completadas, ver tasks.md)
 
 > Nota de trazabilidad: este folder es la copia con el NOMBRE CORRECTO del spec.
-> Hasta el 2026-09-30 el spec (F181-F188) vivía en
-> `019-navegacion-directa-seccion-persistente/` (folder heredado mal nombrado);
+> Hasta el 2026-09-30 el spec (F181-F188) vivía en un folder heredado mal nombrado;
 > el contenido real siempre fue "Nombre, descripción y galería". Aquí se consolidan
-> F181-F192 completas.
+> F181-F192 completas. El folder mal nombrado se retiró el 2026-10-04 (duplicado
+> obsoleto, con `plan.md` idéntico a `tasks.md`): su detalle de F188 se movió aquí.
 
 ## User Scenarios & Testing
 
@@ -125,7 +125,42 @@
   checks: login admin, evento con cartel + 3 fotos, miniaturas públicas cargadas,
   lightbox (src/alt/cierre con `Esc` y clic fuera) y los tres casos de `planGaleria`
   (no tocar → intacta, quitar una → borra solo esa, sustituir/hueco → upsert sin borrados).
-- Historial de F188 ampliado el 2026-09-30 (imágenes grandes y carreras): se documenta en el
-  spec histórico de `019-navegacion-directa-seccion-persistente/spec.md` (mismo contenido,
-  decisiones de `webify`, `procesandoCartel` y las tres tandas). Aquí queda referenciado sin
-  duplicarlo.
+  La inspección visual de estilos en píxeles sigue siendo del usuario.
+- F188 ampliado el 2026-09-30 tras el bug de imágenes grandes (dos fallos encadenados):
+  - 1) El guardado mandaba el `File` original, sin pasar por `canvas`: una foto de 5.7 MB
+    reventaba el límite de 2 MB de `spring.servlet.multipart` y Chrome cerraba la conexión
+    con `net::ERR_CONNECTION_RESET` (sin respuesta que leer, luego sin 413 posible).
+  - 2) Ya comprimida a WebP, si se quedaba por encima de ~500 KB el `INSERT` del `LONGBLOB`
+    moría con `PacketTooBigException` (`max_allowed_packet=1 MB` en XAMPP) y la API devolvía
+    500. Causa raíz: el almacenamiento, no el tráfico.
+  - Solución en el frontend: `webify()` recorta hasta `MAX_BYTES_IMAGEN` (480 KiB) probando
+    una escalera de calidad y, si hace falta, reduciendo el lado mayor; devuelve el primer
+    resultado que entra. `useEventoForm` espera a las conversiones en vuelo (`procesandoGaleria`)
+    antes del POST, y los archivos ya comprimidos no se recomprimen.
+  - Solución en el backend: `GlobalExceptionHandler` traduce esa causa a 413 con mensaje
+    accionable en lugar del 500 genérico.
+  - Verificado en Chrome (2026-09-30) por la UI de administración: la foto de 5.7 MB quedó en
+    WebP de 336.052 bytes, se guardó, y una segunda edición que no tocó la galería la
+    conservó intacta. Además: POST directo de 600 KB -> 413, de 500 KB -> 201.
+  - Cobertura: `js/ui/imagenes.check.js` (escalera y presupuesto, con mutation test negativo).
+- F188, tercera tanda (2026-09-30): el CARTEL no esperaba a su propia compresión, el mismo
+  bug que ya se había arreglado en galería pero por el camino del handler de plantilla:
+  - `handleFileUpload` (js/ui/imagenes.js) lanzaba las dos conversiones (400 display + 1600 HD)
+    con callbacks sueltos sin registrar ninguna, y `submitForm` solo esperaba a
+    `esperarCompresionGaleria()`.
+  - Reproducido en Chrome el 2026-09-30 con un JPEG de 8,5 MB puesto en `#fileInput` y
+    "Guardar" pulsado en el MISMO tick (fijo sintético de ruido, 4000x2600, generado en la
+    página para no depender del disco): el PUT sí salió (la descripción se guardó) pero el
+    cartel se quedó en los 33.256 bytes anteriores. Pérdida SILENCIOSA: al editar, el backend
+    conserva el cartel previo y la app no dice nada. En modo crear daba el error falso
+    "Sube la imagen del cartel (obligatoria al crear)" con la foto ya elegida.
+  - Arreglo: `procesandoCartel` (Set a nivel de módulo) + `esperarCompresionCartel()`, y las
+    dos esperas se hacen ANTES de `validarObligatorios()` en `submitForm`, porque esa
+    validación mira `file.value` y llegaría a null.
+  - Verificado tras el arreglo con el mismo patrón de carrera: 8.565.007 -> 13.788 (display) y
+    326.698 (HD), y en modo crear con cartel y galería pesados a la vez (7.110.281 bytes):
+    evento creado con cartel 17.222 y galería 348.310, ambos WebP y bajo el presupuesto.
+  - Cobertura en `js/ui/imagenes.check.js`: caso 6 (el handler registra y `esperarCompresionCartel`
+    deja display y HD listos y dentro del presupuesto) y caso 7 (sobre el fuente, que la espera
+    existe y precede a la validación). Verificado con 4 mutaciones: sin registro, sin espera,
+    espera después de validar y sin espera de galería: las 4 se detectan.

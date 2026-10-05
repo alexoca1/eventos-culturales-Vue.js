@@ -21,7 +21,7 @@ Autenticación: access JWT (15 min) en `Authorization: Bearer <token>` + refresh
 | POST | `/auth/login` `{email, password}` → `{token, accessToken, user}` + cookie | Login |
 | POST | `/auth/refresh` (cookie) | Rota el refresh y devuelve nuevo access |
 | POST | `/auth/logout` (cookie) | Revoca el refresh y limpia la cookie |
-| POST | `/auth/register` `{email, password, nombre, apellidos, telefono}` → 201 | Registro, **siempre `ROLE_USER`** (teléfono obligatorio) |
+| POST | `/auth/register` `{email, password, nombre, apellidos, telefono}` → 201 | Registro, **siempre `ROLE_USER`** (teléfono obligatorio; contraseña ≥ 8 con mayúscula, minúscula y número) |
 
 ## Solo `ROLE_ADMIN` (token + `@PreAuthorize("hasRole('ADMIN')")`)
 
@@ -38,7 +38,9 @@ Autenticación: access JWT (15 min) en `Authorization: Bearer <token>` + refresh
 | GET | `/auth/usuarios` | Lista usuarios (`id, email, nombre, apellidos, roles[], telefono, enabled, nombreOrganizacion, encargadoNombre, encargadoTelefono, encargadoEmail`) |
 | PUT | `/auth/usuarios/{id}` `{roles?, enabled?, nombreOrganizacion?, encargadoNombre?, encargadoTelefono?, encargadoEmail?}` | Edita rol/estado (200; inexistente → 404; `roles` con ≠1 rol o inválido → 400; pasar a `ORGANIZADOR` sin los 4 datos de organización → 400; auto-bloqueo propio → 409) |
 | GET | `/auth/perfil` | Perfil del token (cualquier autenticado; incluye `telefono` y datos de organización) |
-| PUT | `/auth/perfil` `{nombre?, apellidos?, telefono?, nombreOrganizacion?, ...}` | Edita el propio perfil (nunca rol/estado; `telefono` no se puede vaciar → 400; datos org solo si es `ORGANIZADOR` y deben quedar completos) |
+| PUT | `/auth/perfil` `{email?, nombre?, apellidos?, telefono?, nombreOrganizacion?, ...}` | Edita el propio perfil (nunca rol/estado; `telefono` no se puede vaciar → 400; datos org solo si es `ORGANIZADOR` y deben quedar completos). **`email` es editable desde 023**: formato inválido → 400 `{"email": "El correo debe ser válido"}`; ya en uso por otra cuenta → 409 `{"error": "Ese correo ya está en uso"}`; igual al actual (mayúsculas incluidas) → no-op 200; cuenta demo → 403. **OJO con la sesión**: el `sub` del JWT es el email, así que tras un cambio el token en vigor ya no identifica a nadie (el siguiente request responde 500). El cliente DEBE llamar a `POST /auth/refresh` con la cookie —que apunta al usuario, no al email— y usar el token nuevo |
+| GET | `/auth/perfil/exportar` | **RGPD art. 20 — portabilidad** (cualquier autenticado, no solo admin). Devuelve `UserDataExportDTO`: `id, email, nombre, apellidos, telefono, nombreOrganizacion, encargado*, roles[], fechaRegistro, eventosCreados[], favoritos[]`. **Nunca incluye el hash de la contraseña** |
+| DELETE | `/auth/perfil` | **RGPD art. 17 — supresión** (cualquier autenticado, no solo admin). Anonimiza la propia cuenta y no la borra: email → `deleted_[epoch]@removed.local`, `nombre` → `"Usuario eliminado"`, `password` vacía, `enabled=false`, y a null `telefono, apellidos, nombreOrganizacion, encargado*`; además borra sus refresh tokens y sus favoritos. **Los eventos creados se conservan** (siguen apuntando a la cuenta anonimizada, para no romper la trazabilidad). Responde `200 {"message": "..."}`. El access JWT en vigor sigue válido hasta expirar (15 min); al refrescar ya no hay cuenta que autenticar |
 | GET | `/etiquetas` | Catálogo de etiquetas, ordenadas por nombre (público, sin login) |
 | POST | `/etiquetas` `{nombre}` | Crea etiqueta (201; vacío → 400; duplicada → 409) |
 | PUT | `/etiquetas/{id}` `{nombre}` | Renombra (200; inexistente → 404; vacío → 400; duplicada → 409) |
@@ -76,21 +78,28 @@ Cada tarde (cron configurable `app.recordatorios.cron`, default 20:00) se envía
 
 `GET /eventos` (con o sin filtros) devuelve solo `APROBADO` salvo que el llamante sea `ROLE_ADMIN`, que ve todos los estados.
 
+### Cuenta demo
+
+La demo publica unas credenciales de prueba con `ROLE_ADMIN`. Cualquier **`DELETE`**
+autenticado con esa cuenta responde **403** con `{"error": "Acción no permitida en modo
+demostración..."}` (crear, editar y moderar siguen funcionando). Las credenciales se
+documentan en el `README.md`.
+
 ## Modelos
 
 ```json
 // Evento (el cartel NO viene en el JSON: se pide a /cartel o /cartel-hd;
 // las fotos de galería tampoco: se piden a /galeria/{orden}, y el JSON solo
 // trae `nombre` y `descripcion`, no los índices)
-{"id": 1, "establecimiento": "El mesoncito", "direccion": "C. Aduana, 3, 13500 Puertollano, Ciudad Real",
+{"id": 1, "establecimiento": "Plaza de la Constitución", "direccion": "Pl. de la Constitución, s/n, 13500 Puertollano, Ciudad Real",
  "fecha": "2026-10-01", "horaInicio": "20:00:00", "horaFin": "22:30:00", "fechaFin": "2026-10-01",
  "nombre": "Fiesta Mexicana",
  "descripcion": "Verbena con música en directo y comida típica. Entrada libre hasta las 22:00.",
  "etiquetas": [{"id": 1, "nombre": "MUSICA"}],
- "estado": "APROBADO", "creadoPor": {"id": 1, "email": "admin@test.com", ...}, "motivoRechazo": null,
+ "estado": "APROBADO", "creadoPor": {"id": 1, "email": "admin@test.com", "nombreOrganizacion": "Asoc. Cultural"}, "motivoRechazo": null,
  "cartelUrl": null, "mapaEmbed": "<iframe src=\"https://www.google.com/maps/embed?...\">...</iframe>",
- "redesSociales": [{"red": "FACEBOOK", "url": "https://facebook.com/elmeseoncito"}],
- "telefonoEvento": "926420000", "urlEvento": "https://www.elmeseoncito.es",
+ "redesSociales": [{"red": "FACEBOOK", "url": "https://facebook.com/eventosculturalespuertollano"}],
+ "telefonoEvento": "926420000", "urlEvento": "https://www.eventos-culturales.es",
  "fechaAlta": "2026-09-16T11:00:00", "fechaModificacion": "2026-09-16T11:00:00"}
 
 // EventoDTO (POST/PUT: mismos campos menos id/fechas; establecimiento, direccion, fecha y nombre obligatorios.
@@ -102,8 +111,14 @@ Cada tarde (cron configurable `app.recordatorios.cron`, default 20:00) se envía
 // YOUTUBE, TIKTOK, LINKEDIN, WHATSAPP, TELEGRAM); red desconocida → 400. Se guarda una fila por red;
 // si una red se repite en el JSON gana la ÚLTIMA url (no se duplica).
 // telefonoEvento y urlEvento opcionales (contacto del evento, no del organizador).
+// `urlEvento`, `cartelUrl` y cada `redesSociales[].url` deben ser http:// o https://
+// (vacío/nulo vale): cualquier otro esquema —p. ej. `javascript:`— → 400.
 // fechaFin < fecha → 400. El aviso "(día siguiente)" del frontend usa fechaFin tal cual, sin recalcular.)
 ```
+
+// creadoPor: SOLO estos tres campos (minimización de datos, 017 FR-001).
+// Nunca sale el Usuario entero: sin password (hash), teléfono, apellidos,
+// encargado*, roles, enabled ni fechaRegistro.
 
 // Auth: el campo `roles` es un ARRAY (p. ej. `["ROLE_ADMIN"]`), no una cadena
 // (login: `user.roles`; refresh: `user.roles`; perfil: `roles`)
@@ -113,7 +128,8 @@ Cada tarde (cron configurable `app.recordatorios.cron`, default 20:00) se envía
 
 | Código | Cuándo |
 |---|---|
-| 400 | Validación (`@NotBlank/@NotNull` —incluido `nombre` del evento, obligatorio), `?fecha=` malformada, horario a medias (solo una hora), `fechaFin` anterior a `fecha`, `mapaEmbed` que no sea un `<iframe>` de Google Maps con atributos permitidos (`src`, `width`, `height`, `style`, `allowfullscreen`, `loading`, `referrerpolicy`), `red` de `redesSociales` desconocida, email duplicado, cartel o foto de galería no-JPEG/PNG/WebP o > 2 MB, `orden` de galería fuera de `0..4`, foto de galería ausente, 6ª foto en posición nueva, o `q` de longitud fuera de 2-100 / combinado con `fecha` o `futuros` |
+| 400 | Validación (`@NotBlank/@NotNull` —incluido `nombre` del evento, obligatorio), `?fecha=` malformada, horario a medias (solo una hora), `fechaFin` anterior a `fecha`, `mapaEmbed` que no sea un `<iframe>` de Google Maps con atributos permitidos (`src`, `width`, `height`, `style`, `allowfullscreen`, `loading`, `referrerpolicy`), `red` de `redesSociales` desconocida, URL que no empiece por `http(s)://` (`urlEvento`, `cartelUrl`, `redesSociales[].url`), contraseña de registro < 8 caracteres o sin mayúscula + minúscula + número, email duplicado, cartel o foto de galería no-JPEG/PNG/WebP o > 2 MB **o cuya firma real (magic bytes) no corresponde al tipo declarado**, `orden` de galería fuera de `0..4`, foto de galería ausente, 6ª foto en posición nueva, o `q` de longitud fuera de 2-100 / combinado con `fecha` o `futuros` |
+| 429 | Rate limit en memoria: 5 intentos de login por email+IP o 5 registros por IP en una ventana de 60 s (`app.security.login-rate-limit.*` / `app.security.registration-rate-limit.*`). Se resetea al reiniciar la app |
 | 401 | Sin token en ruta protegida, credenciales malas, refresh ausente/inválido/reutilizado/expirado |
 | 403 | Token válido sin `ROLE_ADMIN` en operación de admin; o `ROLE_ORGANIZADOR` que no es el dueño del evento en editar/borrar el evento o en escribir su galería |
 | 404 | Evento/usuario inexistente |

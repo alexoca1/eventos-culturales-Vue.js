@@ -72,10 +72,12 @@ public class GlobalExceptionHandler {
     }
 
     // Manejo de excepciones no controladas: al cliente SIEMPRE mensaje genérico;
-    // el detalle completo queda solo en el log del servidor (US2 hardening).
+    // en el servidor solo se registra la clase y el mensaje, sin stack trace: la traza
+    // completa puede volcar payloads con datos personales (US2 hardening + RGPD).
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception ex) {
-        ex.printStackTrace();   //Para ver toda la traza del error en la consola
+        System.err.println("[GlobalExceptionHandler] Excepción no controlada: "
+                + ex.getClass().getName() + " — " + ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", "Error interno del servidor"));
     }

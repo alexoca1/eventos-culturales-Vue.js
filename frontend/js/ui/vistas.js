@@ -1,4 +1,4 @@
-// Mapa de vistas de la aplicación (019-navegacion-directa-seccion-persistente).
+// Mapa de vistas de la aplicación.
 // Datos puros, sin dependencias del navegador: el composable useVista.js los
 // usa para decidir qué sección está visible y cuál se puede reabrir, y
 // vistas.check.js los verifica con node (sin framework).

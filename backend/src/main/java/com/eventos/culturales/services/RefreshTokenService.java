@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.services;
 
 import com.eventos.culturales.entities.RefreshToken;
@@ -80,5 +82,11 @@ public class RefreshTokenService {
     @Transactional
     public void purgeExpiredTokens() {
         refreshTokenRepository.deleteByExpiryDateBefore(Instant.now());
+    }
+
+    /** 018 FR-001: supresión de cuenta — borra TODOS los refresh tokens del usuario. */
+    @Transactional
+    public void revokeAllFor(Usuario usuario) {
+        refreshTokenRepository.deleteByUsuario(usuario);
     }
 }

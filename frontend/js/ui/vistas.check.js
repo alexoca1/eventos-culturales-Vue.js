@@ -235,6 +235,7 @@ assert.ok(
 // antes de que Vue aplique un solo v-if.
 for (const [nombre, html] of [
     ["index.html", login],
+    ["login.html (views/)", plantilla("login")],
     ["administrador.html", plantilla("administrador")],
     ["organizador.html", plantilla("organizador")],
     ["usuarioEstandar.html", plantilla("usuarioEstandar")]

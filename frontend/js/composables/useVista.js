@@ -1,4 +1,4 @@
-// useVista (019-navegacion-directa-seccion-persistente).
+// useVista.
 // Da nombre a la sección visible y lo refleja en la URL (?vista=<nombre>), de
 // modo que recargar el navegador devuelve al usuario a donde estaba. También
 // centraliza "ver la portada", que hasta ahora cada opener repetía a mano.

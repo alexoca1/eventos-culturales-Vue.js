@@ -48,6 +48,13 @@ class LoginFilterBodyTest {
     @MockitoBean
     private AuthenticationManager authenticationManager;
 
+    // 018: dependencias nuevas de AuthController (supresión y portabilidad RGPD)
+    @MockitoBean
+    private com.eventos.culturales.repositories.EventoRepository eventoRepository;
+
+    @MockitoBean
+    private com.eventos.culturales.repositories.FavoritoRepository favoritoRepository;
+
     @MockitoBean
     private org.springframework.data.jpa.mapping.JpaMetamodelMappingContext jpaMetamodelMappingContext;
 

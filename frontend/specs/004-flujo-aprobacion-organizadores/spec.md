@@ -15,6 +15,8 @@ El login (`index.html`, ya existente) deja de asumir que todo login es de admin:
 2. **Given** login exitoso con `roles` incluyendo `ROLE_ORGANIZADOR` (sin `ROLE_ADMIN`), **When** se completa, **Then** redirige a `views/organizador.html` (vista nueva).
 3. **Given** login exitoso sin ninguno de esos dos roles, **When** se completa, **Then** se comporta como hoy con cualquier login no-admin (mensaje de error o vista de invitado — fuera de alcance de esta feature, se resuelve en `008-favoritos-recordatorios`).
 
+> **Nota (2026-10-05)**: la UI de login tiene dos entradas — `index.html` (raíz) y `views/login.html`. Estas acceptance scenarios describen el **destino** (la página de cada rol), que no cambia; lo que cambia es cómo se construye la ruta, que ahora es relativa al documento con prefijo según el contexto (`views/` en la raíz, vacío dentro de `views/`), de modo que ambos puntos de entrada llevan a la misma vista sin aparecer `views/views/`.
+
 ---
 
 ### User Story 2 - Crear evento con previsualización y confirmación explícita (Priority: P1)

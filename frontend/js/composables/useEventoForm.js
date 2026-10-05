@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 // useEventoForm (F084 de 008-refactor-modular-esm + 019-nombre-descripcion-galeria).
 // Formulario compartido crear/editar + previsualización del organizador.
 import { ref } from '../../lib/vue.esm-browser.js';
@@ -303,7 +305,8 @@ export function useEventoForm() {
             horaInicio: inputHoraInicio.value ? inputHoraInicio.value + ":00" : null,
             horaFin: inputHoraFin.value ? inputHoraFin.value + ":00" : null,
             poster: inputPoster.value,
-            map: processMap(inputMap.value)
+            map: processMap(inputMap.value),
+            mapaCargado: false // 021 T213: igual que apiToView, el iframe espera al clic
         };
         showForm.value = false;
         useEventosInvitado().showCover.value = false;

@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -19,17 +20,17 @@
                         <button @click="logout()">Cerrar sesión</button>
                     </div>
                 </div>
-                <a v-else class="sesion-entrar" href="../index.html">Ingresar</a>
+                <a v-else class="sesion-entrar" href="login.html">Ingresar</a>
             </template>
         </header>
 
         <main v-show="!arrancando">
             <div class="control">
                 <h3>🔍 Buscar eventos</h3>
-                <p style="margin-top: -0.3em; opacity: 0.85;">Filtra por fecha o etiqueta, o usa los atajos rápidos.</p>
+                <p style="margin-top: -0.3em;">Filtra por fecha o etiqueta, o usa los atajos rápidos.</p>
                 <div class="fecha">
-                    <label for="">Buscar eventos por fecha</label>
-                    <input type="date" @change="filtrar()" v-model="searchDate">
+                    <label for="buscar-fecha">Buscar eventos por fecha</label>
+                    <input type="date" id="buscar-fecha" @change="filtrar()" v-model="searchDate">
                     <div class="atajos-fecha">
                         <button type="button" @click="hoy()">Hoy</button>
                         <button type="button" @click="finDeSemana()">Este fin de semana</button>
@@ -37,9 +38,9 @@
                     </div>
                 </div>
                 <div class="buscador-texto">
-                    <label>🔍 Buscar por nombre o lugar</label>
+                    <label for="buscar-texto">🔍 Buscar por nombre o lugar</label>
                     <div style="display:flex; gap:var(--space-sm)">
-                        <input type="text" v-model="searchText"
+                        <input type="text" id="buscar-texto" v-model="searchText"
                                placeholder="Ej: Teatro Municipal, Jazz..."
                                minlength="2" maxlength="100"
                                @keyup.enter="buscarPorTexto()">
@@ -49,9 +50,9 @@
                         {{errBusqueda}}</small>
                 </div>
                 <div class="fecha">
-                    <label for="">Filtrar por etiquetas</label>
-                    <label v-for="t in etiquetasDisponibles" :key="t.id">
-                        <input type="checkbox" :value="t.nombre" v-model="searchEtiquetas" @change="filtrar()"> {{t.nombre}}
+                    <p class="titulo-grupo">Filtrar por etiquetas</p>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id" :for="'buscar-etq-' + t.id">
+                        <input type="checkbox" :id="'buscar-etq-' + t.id" :value="t.nombre" v-model="searchEtiquetas" @change="filtrar()"> {{t.nombre}}
                     </label>
                 </div>
             </div>
@@ -67,7 +68,7 @@
             <div v-show="showProximos" id="lista-proximos">
                 <h2>Próximos eventos</h2>
                 <p>De lo más próximo a lo último.</p>
-                <p style="opacity: 0.85;">Mostrando los próximos eventos disponibles. ¿Buscas algo en una fecha o categoría concreta? Usa el buscador de arriba ↑</p>
+                <p>Mostrando los próximos eventos disponibles. ¿Buscas algo en una fecha o categoría concreta? Usa el buscador de arriba ↑</p>
                 <div class="mostrar_evento" v-for="ev in proximosEventos" :key="ev.id">
                     <div class="cartel">
                         <p>Cartel (clic para ampliar)
@@ -97,7 +98,12 @@
                     </div>
                     <div class="mapa">
                         <p>Ubicación</p>
-                        <div v-html="ev.map"></div>
+                        <p v-if="ev.map && !ev.mapaCargado" class="mapa-aviso">
+                            Al cargar el mapa, Google recibirá tu dirección IP.
+                            <a href="privacidad.html" target="_blank">Más información</a>
+                        </p>
+                        <div v-if="ev.mapaCargado" v-html="ev.map"></div>
+                        <button v-else-if="ev.map" type="button" class="mapa-boton" @click="ev.mapaCargado = true">Cargar mapa interactivo</button>
                     </div>
                 </div>
                 <div class="paginacion" v-show="paginaMeta.totalPages > 1">
@@ -141,7 +147,12 @@
                 </div>
                 <div class="mapa">
                     <p>Ubicación</p>
-                    <div v-html="ev.map"></div>
+                    <p v-if="ev.map && !ev.mapaCargado" class="mapa-aviso">
+                        Al cargar el mapa, Google recibirá tu dirección IP.
+                        <a href="privacidad.html" target="_blank">Más información</a>
+                    </p>
+                    <div v-if="ev.mapaCargado" v-html="ev.map"></div>
+                    <button v-else-if="ev.map" type="button" class="mapa-boton" @click="ev.mapaCargado = true">Cargar mapa interactivo</button>
                 </div>
             </div>
             <div class="paginacion" v-show="showEvent && paginaMeta.totalPages > 1">
@@ -187,7 +198,12 @@
                     </div>
                     <div class="mapa">
                         <p>Ubicación</p>
-                        <div v-html="ev.map"></div>
+                        <p v-if="ev.map && !ev.mapaCargado" class="mapa-aviso">
+                            Al cargar el mapa, Google recibirá tu dirección IP.
+                            <a href="privacidad.html" target="_blank">Más información</a>
+                        </p>
+                        <div v-if="ev.mapaCargado" v-html="ev.map"></div>
+                        <button v-else-if="ev.map" type="button" class="mapa-boton" @click="ev.mapaCargado = true">Cargar mapa interactivo</button>
                     </div>
                 </div>
                 <div class="paginacion" v-show="paginaMeta.totalPages > 1">
@@ -203,16 +219,25 @@
 
             <div class="mostrar_ingresar" v-show="showPerfil">
                 <h3>Mi perfil</h3>
-                <label>Nombre</label>
-                <input type="text" v-model="perfilNombre"><br>
-                <label>Apellidos</label>
-                <input type="text" v-model="perfilApellidos"><br>
-                <label>Teléfono (obligatorio)</label>
-                <input type="tel" v-model="perfilTelefono"><br>
+                <label for="perfil-nombre">Nombre</label>
+                <input type="text" id="perfil-nombre" v-model="perfilNombre"><br>
+<label for="perfil-apellidos">Apellidos</label>
+                    <input type="text" id="perfil-apellidos" v-model="perfilApellidos"><br>
+                    <label for="perfil-email">Correo electrónico (obligatorio, con este inicias sesión)</label>
+                    <input type="email" id="perfil-email" v-model.trim="perfilEmail"><br>
+                <label for="perfil-telefono">Teléfono (obligatorio)</label>
+                <input type="tel" id="perfil-telefono" v-model="perfilTelefono"><br>
                 <button @click="guardarPerfil(false)">Guardar</button>
                 <button @click="cerrarPerfil()">Cerrar</button>
                 <p v-if="perfilError" style="color: red;">{{perfilError}}</p>
                 <p v-if="perfilOk" style="color: green;">Guardado.</p>
+                <button v-if="!confirmarBorrado" class="perfil-borrado" @click="pedirBorrado()">Eliminar mi cuenta</button>
+                <div v-else class="dialogo-borrado">
+                    <p>¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer. Tus datos personales serán anonimizados conforme al RGPD. Los eventos que hayas publicado se conservarán sin vinculación a tu identidad.</p>
+                    <p v-if="borradoError" style="color: red;">{{borradoError}}</p>
+                    <button @click="cancelarBorrado()">Cancelar</button>
+                    <button @click="eliminarCuenta()">Sí, eliminar mi cuenta</button>
+                </div>
             </div>
 
             <div class="mostrar_ingresar" v-show="showPanel">
@@ -265,7 +290,13 @@
                     </div>
                 </div>
             </div>
-            <p class="footer-copy">© 2024–2025 Asociación Cultural Puertollano · Todos los derechos reservados</p>
+            <p class="footer-copy">© 2024–2026 Asociación Cultural Puertollano · Proyecto educativo de portafolio, con datos ficticios e imágenes generadas con IA</p>
+            <nav class="footer-legal" aria-label="Enlaces legales">
+                <a href="avisoLegal.html">Aviso Legal</a>
+                <a href="privacidad.html">Política de Privacidad</a>
+                <a href="terminos.html">Términos de Uso</a>
+                <a href="mailto:reportes@culturalpuertollano.es?subject=Reporte%20de%20contenido">Reportar contenido</a>
+            </nav>
         </footer>
     </div>
 

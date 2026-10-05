@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.repositories;
 
 import com.eventos.culturales.entities.EstadoEvento;
@@ -26,6 +28,9 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
 
     // 007: panel del organizador (solo sus eventos, en cualquier estado) — 014: paginado
     Page<Evento> findByCreadoPorOrderByIdAsc(com.eventos.culturales.entities.Usuario creadoPor, Pageable pageable);
+
+    // 018 FR-002: exportación RGPD (sin paginar: el histórico de un usuario es pequeño)
+    List<Evento> findByCreadoPor(com.eventos.culturales.entities.Usuario creadoPor);
 
     // 006: un evento aparece en cada día de su rango [fecha, fechaFin]
     // (fechaFin null de filas antiguas = un día)

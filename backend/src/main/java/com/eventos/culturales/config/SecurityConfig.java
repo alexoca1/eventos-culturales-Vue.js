@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.config;
 
 import com.eventos.culturales.services.JwtService;
@@ -47,7 +49,9 @@ public class SecurityConfig {
     // o "/eventos/{id}" también casaría con ellos (un segmento cualquiera), por eso la exclusión explícita.
     @Bean
     @Order(1)
-    public SecurityFilterChain publicChain(HttpSecurity http, LoginRateLimitFilter loginRateLimitFilter) throws Exception {
+    public SecurityFilterChain publicChain(HttpSecurity http,
+                                           LoginRateLimitFilter loginRateLimitFilter,
+                                           RegistrationRateLimitFilter registrationRateLimitFilter) throws Exception {
         http
                 .securityMatchers(matchers -> matchers
                         .requestMatchers("/auth/login", "/auth/refresh", "/auth/logout", "/auth/register")
@@ -77,6 +81,8 @@ public class SecurityConfig {
                 // Rate limiting solo para POST /auth/login (el propio filtro ignora el resto),
                 // antes de validar credenciales para no gastar BCrypt en peticiones bloqueadas.
                 .addFilterBefore(loginRateLimitFilter, AuthorizationFilter.class)
+                // 017 FR-004: 5 altas / 60s por IP en POST /auth/register (idem, solo ese path).
+                .addFilterBefore(registrationRateLimitFilter, AuthorizationFilter.class)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
@@ -98,7 +104,11 @@ public class SecurityConfig {
                                 .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                         )
-                );
+                )
+                // 019 FR-002: la cuenta demo no borra nada. Se crea AQUÍ y no como @Bean:
+                // un bean de tipo Filter lo registra también Spring Boot como filtro del
+                // servlet, que corre sin SecurityContext y se "come" este (OncePerRequestFilter).
+                .addFilterBefore(new DemoAccountProtectionFilter(), AuthorizationFilter.class);
 
         return http.build();
     }
@@ -133,6 +143,14 @@ public class SecurityConfig {
             @Value("${app.security.login-rate-limit.max-attempts:5}") int maxAttempts,
             @Value("${app.security.login-rate-limit.window-seconds:60}") long windowSeconds) {
         return new LoginRateLimitFilter(maxAttempts, windowSeconds, java.time.Clock.systemUTC());
+    }
+
+    // 017 FR-004: rate limit del registro público (ver RegistrationRateLimitFilter).
+    @Bean
+    public RegistrationRateLimitFilter registrationRateLimitFilter(
+            @Value("${app.security.registration-rate-limit.max-attempts:5}") int maxAttempts,
+            @Value("${app.security.registration-rate-limit.window-seconds:60}") long windowSeconds) {
+        return new RegistrationRateLimitFilter(maxAttempts, windowSeconds, java.time.Clock.systemUTC());
     }
 
     @Bean

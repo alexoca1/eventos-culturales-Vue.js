@@ -24,7 +24,8 @@ public class EmailService {
             mensaje.setText(cuerpo);
             mailSender.send(mensaje);
         } catch (Exception e) {
-            System.err.println("[EmailService] No se pudo enviar email a " + destinatario + ": " + e.getMessage());
+            System.err.println("[EmailService] No se pudo enviar email"
+                    + " (destinatario omitido por RGPD): " + e.getClass().getSimpleName());
         }
     }
 }

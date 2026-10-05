@@ -98,7 +98,7 @@ class GaleriaControllerTest {
         ArgumentCaptor<FotoGaleria> captor = ArgumentCaptor.forClass(FotoGaleria.class);
         verify(fotoGaleriaRepository).save(captor.capture());
         assertEquals(0, captor.getValue().getOrden());
-        assertArrayEquals(new byte[]{1, 2, 3}, captor.getValue().getDatos());
+        assertArrayEquals(JPEG, captor.getValue().getDatos());
         assertEquals("image/jpeg", captor.getValue().getContentType());
     }
 
@@ -116,7 +116,7 @@ class GaleriaControllerTest {
         ArgumentCaptor<FotoGaleria> captor = ArgumentCaptor.forClass(FotoGaleria.class);
         verify(fotoGaleriaRepository).save(captor.capture());
         assertEquals(1L, captor.getValue().getId(), "debe reusar la fila existente, no crear otra");
-        assertArrayEquals(new byte[]{1, 2, 3}, captor.getValue().getDatos());
+        assertArrayEquals(JPEG, captor.getValue().getDatos());
     }
 
     // Caso límite de FR-009: con las 5 posiciones ocupadas, una posición ya ocupada
@@ -387,8 +387,11 @@ class GaleriaControllerTest {
         return e;
     }
 
+    // 017 FR-005: firma JPEG real (magic bytes) — ver EventoController.validarArchivo
+    private static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, 1, 2, 3};
+
     private static MockMultipartFile foto() {
-        return new MockMultipartFile("foto", "g.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        return new MockMultipartFile("foto", "g.jpg", "image/jpeg", JPEG);
     }
 
     private static FotoGaleria fotoGuardada(Long id, int orden, byte[] datos) {

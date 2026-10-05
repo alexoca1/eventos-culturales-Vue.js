@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.dto;
 
 import jakarta.validation.constraints.NotBlank;
@@ -25,6 +27,9 @@ public record EventoDTO(
         // 015 US1: opcional. Sigue en el record; ya no es obligatorio.
         String descripcion,
 
+        // 017 FR-002: solo http(s) — bloquea javascript:, data:, etc. (XSS al abrir el enlace)
+        @Pattern(regexp = "^(https?://.*)?$",
+                message = "La URL del cartel debe comenzar por http:// o https://")
         String cartelUrl,
 
         LocalTime horaInicio,
@@ -47,9 +52,13 @@ public record EventoDTO(
         // 016 (Phase 4): redes sociales y contacto, todos opcionales.
         // redesSociales: List<RedSocialDTO>; repetir la misma red reemplaza (último gana).
         // Valores desconocidos del enum → 400 (HttpMessageNotReadableException).
-        List<RedSocialDTO> redesSociales,
+        // 017 FR-002: el @Valid de tipo cascada valida la url de cada red (solo http(s)).
+        List<@jakarta.validation.Valid RedSocialDTO> redesSociales,
 
         String telefonoEvento,
 
+        // 017 FR-002: solo http(s). Vacío/nulo sigue permitido (campo opcional).
+        @Pattern(regexp = "^(https?://.*)?$",
+                message = "La URL del evento debe comenzar por http:// o https://")
         String urlEvento
 ) {}

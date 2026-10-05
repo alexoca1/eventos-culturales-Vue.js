@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 /* Estilos generales */
 body {
     font-family: var(--font-family-base);
@@ -20,6 +22,17 @@ header {
     text-decoration: none;
 }
 
+/* 022 T221: indicador de foco visible al navegar con teclado (WCAG 2.4.7) */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 2px;
+}
+
 main {
     padding: var(--space-md);
 }
@@ -36,6 +49,17 @@ main {
     box-shadow: var(--shadow-sm);
     flex-wrap: wrap; /* Permite que los elementos se envuelvan */
 }
+
+/* RGPD: aviso informativo (nunca un alert) tras ?cuentaEliminada=1 */
+.aviso-cuenta-eliminada {
+    margin-bottom: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-surface);
+    border-left: 4px solid var(--color-primary);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
 
 /* Botón de Ingreso como Invitado */
 .invitado-button {

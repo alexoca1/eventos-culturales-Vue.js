@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.config;
 
 import com.eventos.culturales.entities.Etiqueta;
@@ -17,6 +19,10 @@ import java.util.Set;
 
 @Component
 public class DataInitializer {
+
+    // 019 T176: iframe genérico que comparten las 3 semillas renombradas (ver seedEventos).
+    private static final String MAPA_EMBED_SEMILLA =
+            "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.1514033241547!2d-4.109704738305717!3d38.69136633423611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf6636e3549%3A0x4b13ec5f916e923c!2sAuditorio%20Municipal!5e0!3m2!1ses!2ses!4v1733934475151!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>";
 
     private final UsuarioRepository usuarioRepository;
     private final EventoRepository eventoRepository;
@@ -52,7 +58,7 @@ public class DataInitializer {
             admin.setEnabled(true);
             admin.setTelefono("600123123");
             usuarioRepository.save(admin);
-            System.out.println("[DataInitializer] Admin user created: " + adminEmail);
+            System.out.println("[DataInitializer] Usuario admin semilla creado.");
         } else {
             Usuario admin = adminExistente.get();
             boolean cambiado = false;
@@ -70,6 +76,22 @@ public class DataInitializer {
                 usuarioRepository.save(admin);
             }
         }
+        // 019 FR-001: cuenta demo. La contraseña no es un secreto: es una credencial
+        // pública que se publica en el README para que la gente pruebe la demo.
+        String demoEmail = "demo@eventos-culturales.es";
+        if (usuarioRepository.findByEmail(demoEmail).isEmpty()) {
+            Usuario demo = new Usuario();
+            demo.setEmail(demoEmail);
+            demo.setPassword(passwordEncoder.encode("Demo1234!"));
+            demo.setNombre("Demo");
+            demo.setApellidos("Demostración");
+            demo.setRoles(Set.of("ROLE_ADMIN"));
+            demo.setEnabled(true);
+            demo.setTelefono("600000000");
+            usuarioRepository.save(demo);
+            System.out.println("[DataInitializer] Usuario demo semilla creado.");
+        }
+
         backfillNombres();
         seedEventos();
     }
@@ -98,15 +120,19 @@ public class DataInitializer {
         Usuario admin = usuarioRepository.findByEmail("admin@test.com").orElse(null);
         if (eventoRepository.count() == 0) {
             List<Evento> semillas = List.of(
-                    evento("El mesoncito", "C. Aduana, 3, 13500 Puertollano, Ciudad Real",
+                    // 019 T176: los tres locales de hostelería reales sustituidos por espacios
+                    // públicos (la demo no debe anunciar negocios particulares) y su `pb` de
+                    // Google Maps por el del Auditorio Municipal: es el único embed genérico
+                    // que ya sabemos que renderiza, y ningún `?q=` alternativo se pudo validar.
+                    evento("Plaza de la Constitución", "Pl. de la Constitución, s/n, 13500 Puertollano, Ciudad Real",
                             "2026-09-01", "Fiesta Mexicana", "imagen1.jpg", List.of("INFANTIL"),
-                            "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.351416594194!2d-4.11284152355524!3d38.68677135910375!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf53e9f8d2b%3A0xeedf97f108f04ee2!2sBar%20El%20Mesoncito!5e0!3m2!1ses!2ses!4v1733933838752!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
-                    evento("Restaurante HAVANA", "Paseo de San Gregorio, S/N, 13500 Puertollano, Ciudad Real",
+                            MAPA_EMBED_SEMILLA),
+                    evento("Biblioteca Pública", "C. Numancia, 55, 13500 Puertollano, Ciudad Real",
                             "2026-10-01", "Monologo Danni Robira", "imagen2.jpg", List.of("TEATRO"),
-                            "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.274502406314!2d-4.109504855540716!3d38.6885383902203!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d951c6cd995%3A0x6023f1902f9b8560!2sRestaurante%20HAVANA!5e0!3m2!1ses!2ses!4v1733933986816!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
-                    evento("Restaurante Asiático NAKAMA", "C. Vía Crucis, 19, 13500 Puertollano, Ciudad Real",
+                            MAPA_EMBED_SEMILLA),
+                    evento("Mercado de Abastos", "Paseo de San Gregorio, 2D, 13500 Puertollano, Ciudad Real",
                             "2026-11-01", "Exhibición de tapas vegetarianas", "imagen3.jpg", List.of("OTROS"),
-                            "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.4604849300454!2d-4.112005365112297!3d38.684265499999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8d274653c52b%3A0x586b94b2d3ae47f3!2sRestaurante%20Asi%C3%A1tico%20NAKAMA!5e0!3m2!1ses!2ses!4v1733934626820!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),
+                            MAPA_EMBED_SEMILLA),
                     evento("Auditorio Municipal", "Pl. Mariana Pineda, 0, 13500 Puertollano, Ciudad Real",
                             "2026-12-01", "Rock la Mancha Festival", "imagen4.jpg", List.of("MUSICA"),
                             "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3114.1514033241547!2d-4.109704738305717!3d38.69136633423611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd6b8cf6636e3549%3A0x4b13ec5f916e923c!2sAuditorio%20Municipal!5e0!3m2!1ses!2ses!4v1733934475151!5m2!1ses!2ses\" width=\"400\" height=\"300\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"no-referrer-when-downgrade\"></iframe>"),

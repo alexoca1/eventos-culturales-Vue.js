@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 // Repository de eventos y favoritos (Fase 2 de 008-refactor-modular-esm).
 // Mueve apiToView (copiado tal cual, sin cambios de lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³gica) y los fetch de searchEvent,
 // loadAllEvents, submitForm, deleteOne, cargarPendientes, aprobar, confirmarRechazo,
@@ -38,7 +40,10 @@ export function apiToView(e) {
         // Sin cartel en BD (eventos que entraron por API sin poster) el src da 404: el
         // onerror lo cambia por el banner de portada en vez de un icono de imagen rota.
         poster: `<img src="${API}/eventos/${e.id}/cartel" alt="evento imagen" style="max-width: 400px; max-height: 400px;" onerror="this.onerror=null;this.src='../img/evento_portada.jpg'">`,
-        map: e.mapaEmbed || ""
+        map: e.mapaEmbed || "",
+        // 021 T213: el iframe de Google no entra en el DOM hasta que el usuario lo
+        // pide (cero cookies de terceros sin consentimiento). Ver .mapa-boton.
+        mapaCargado: false
     };
 }
 

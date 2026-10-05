@@ -128,6 +128,35 @@ class EventoControllerPublicTest {
                 .andExpect(status().isNotFound());
     }
 
+    // 017 US1/FR-001: creadoPor solo id/email/nombreOrganizacion.
+    // Antes salía el Usuario entero: password (hash), teléfono, apellidos, encargado y roles.
+    @Test
+    void getPorId_creadoPorSoloExponeTresCampos() throws Exception {
+        Evento e = evento(1L, "2026-10-01");
+        e.setCreadoPor(com.eventos.culturales.entities.Usuario.builder()
+                .id(7L).email("org@test.com").password("hash-bcrypt")
+                .nombre("Ana").apellidos("García").telefono("600000000")
+                .nombreOrganizacion("Asociación Cultural")
+                .encargadoNombre("Luis").encargadoTelefono("600111222").encargadoEmail("luis@test.com")
+                .roles(java.util.Set.of("ROLE_ORGANIZADOR")).enabled(true)
+                .build());
+        when(eventoRepository.findById(1L)).thenReturn(Optional.of(e));
+
+        mockMvc.perform(get("/eventos/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.creadoPor.id").value(7))
+                .andExpect(jsonPath("$.creadoPor.email").value("org@test.com"))
+                .andExpect(jsonPath("$.creadoPor.nombreOrganizacion").value("Asociación Cultural"))
+                .andExpect(jsonPath("$.creadoPor.password").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.telefono").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.apellidos").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.encargadoNombre").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.encargadoTelefono").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.encargadoEmail").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.roles").doesNotExist())
+                .andExpect(jsonPath("$.creadoPor.enabled").doesNotExist());
+    }
+
     @Test
     void getConFechaInvalida_devuelve400() throws Exception {
         mockMvc.perform(get("/eventos").param("fecha", "no-es-fecha"))

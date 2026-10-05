@@ -40,8 +40,8 @@ public class RecordatorioService {
                                 + favorito.getEvento().getDescripcion() + "' en "
                                 + favorito.getEvento().getEstablecimiento() + ".");
             } catch (Exception e) {
-                System.err.println("[RecordatorioService] Fallo enviando a "
-                        + favorito.getUsuario().getEmail() + ": " + e.getMessage());
+                System.err.println("[RecordatorioService] Fallo enviando recordatorio"
+                        + " (email omitido por RGPD): " + e.getClass().getSimpleName());
             } finally {
                 favorito.setRecordatorioEnviado(true);
                 favoritoRepository.save(favorito);

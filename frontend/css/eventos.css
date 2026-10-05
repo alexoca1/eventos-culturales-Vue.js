@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT */
+
 /* eventos.css */
 
 /* 019-sin-parpadeo: el <script type="module"> es diferido, asÃƒÂ­ que el navegador
@@ -23,6 +25,19 @@ body {
     padding: 0;
     background-color: var(--color-bg); /* Gris Claro */
     color: var(--color-text); /* Negro */
+}
+
+/* 022 T221: indicador de foco visible para navegar solo con teclado
+   (WCAG 2.4.7). El negro llega a 3:1 sobre el primario, sobre el fondo
+   azul y sobre las tarjetas blancas. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid var(--color-text);
+    outline-offset: 2px;
 }
 
 header {
@@ -156,6 +171,16 @@ main {
     margin-right: var(--space-sm);
 }
 
+/* Título de grupo: NO es la etiqueta de un campo, así que no lleva `for` */
+.titulo-grupo {
+    font-weight: bold;
+    margin: var(--space-sm) 0 var(--space-xs);
+}
+
+.control .titulo-grupo {
+    margin: 0 var(--space-sm) var(--space-xs) 0;
+}
+
 .control input[type="date"] {
     padding: var(--space-sm);
     border: 1px solid var(--color-border); /* Gris */
@@ -278,6 +303,32 @@ h2 {
     border: 0;
 }
 
+.mapa-aviso {
+    font-size: 0.8em;
+    opacity: 0.8;
+    margin-bottom: var(--space-xs);
+}
+
+/* 021 T213: el iframe de Google no se monta hasta que el usuario lo pide. */
+.mapa-boton {
+    display: block;
+    width: 100%;
+    padding: var(--space-md);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-primary-hover);
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.mapa-boton:hover,
+.mapa-boton:focus-visible {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    color: var(--color-surface);
+}
+
 .mostrar_ingresar {
     margin-top: var(--space-md);
     padding: var(--space-md);
@@ -329,6 +380,21 @@ h2 {
 
 .mostrar_ingresar button:hover {
     background-color: var(--color-primary-hover); /* Tomate Oscuro */
+}
+
+/* RGPD: salida destructiva del perfil. Fondo de estado rechazado para que no se
+   confunda con Guardar/Cerrar; selector largo a propósito, gana a .mostrar_ingresar button. */
+.mostrar_ingresar button.perfil-borrado,
+.mostrar_ingresar button.perfil-borrado:hover {
+    background-color: var(--color-estado-rechazado);
+}
+
+.dialogo-borrado {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-estado-rechazado);
+    border-radius: var(--radius-sm);
 }
 
 .eliminar {
@@ -557,7 +623,7 @@ img {
     font-size: 0.8em;
     font-weight: normal;
     color: white;
-    background-color: #777;
+    background-color: var(--color-text-muted);
 }
 
 .badge-pendiente_revision { background-color: var(--color-estado-pendiente); }
@@ -648,12 +714,6 @@ img {
 
 .footer-social a {
     color: var(--color-surface);
-    opacity: 0.85;
-    transition: opacity var(--transition-fast);
-}
-
-.footer-social a:hover {
-    opacity: 1;
 }
 
 .footer-social svg {
@@ -668,7 +728,6 @@ img {
     margin-top: var(--space-lg);
     padding-top: var(--space-md);
     font-size: 0.8rem;
-    opacity: 0.8;
 }
 
 @media (max-width: 480px) {
@@ -694,7 +753,8 @@ img {
     min-height: 100vh;
     min-height: 100dvh;
     text-align: center;
-    color: var(--color-text-muted);
+    /* Sobre --color-bg: el gris apagado no llega a 4.5:1 ahi */
+    color: var(--color-text);
 }
 
 /* Con el backend frÃ­o la puerta puede aguantar segundos: un texto plano parece
@@ -752,7 +812,8 @@ img {
 
 .galeria-slot-num {
     font-size: 0.8rem;
-    color: var(--color-text-muted);
+    /* El slot va sobre el panel secundario (#ffa07a): gris apagado no llega */
+    color: var(--color-text);
 }
 
 /* El hueco vacío es el que invite a elegir: sin foto, solo el input */
@@ -855,3 +916,95 @@ img {
     cursor: pointer;
     padding: var(--space-xs);
 }
+
+/* 021-paginas-legales: aviso legal, privacidad y términos (páginas estáticas).
+ * Reutiliza las mismas variables que el resto: solo cambia el maquetado. */
+.main-header {
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    padding: var(--space-lg);
+}
+
+.header-content {
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.header-content h1 {
+    font-size: 1.4rem;
+}
+
+.header-content .btn-secondary {
+    color: var(--color-surface);
+    font-size: 0.9rem;
+}
+
+.legal-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-lg) var(--space-md);
+}
+
+.legal-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-lg);
+    line-height: 1.6;
+    color: var(--color-text);
+}
+
+.legal-card h2 {
+    font-size: 1.1rem;
+    margin-top: var(--space-lg);
+}
+
+.legal-card h2:first-child {
+    margin-top: 0;
+}
+
+/* Enlaces dentro del texto legal (sobre --color-surface) */
+.legal-card a {
+    color: var(--color-primary-hover);
+}
+
+/* 021-footer-legal: fila de enlaces legales bajo el copyright */
+.footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+    font-size: 0.85rem;
+}
+
+.footer-legal a {
+    color: var(--color-surface);
+    text-decoration: underline;
+}
+
+.footer-legal a:hover {
+    text-decoration: none;
+}
+
+/* 021-registro-consentimiento: la casilla obligatoria de privacidad/edad */
+.consentimiento {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    font-size: 0.85rem;
+    text-align: left;
+    margin: var(--space-sm) 0;
+}
+
+.consentimiento input {
+    margin-top: 0.2em;
+    flex-shrink: 0;
+}
+

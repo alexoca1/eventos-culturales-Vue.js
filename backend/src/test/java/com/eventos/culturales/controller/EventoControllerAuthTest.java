@@ -92,6 +92,12 @@ class EventoControllerAuthTest {
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_ORGANIZADOR")));
     }
 
+    // 019: cuenta demo (FR-001) — misma potencia que un admin, salvo los DELETE (FR-002)
+    private static RequestPostProcessor demo() {
+        return jwt().jwt(b -> b.subject("demo@eventos-culturales.es"))
+                .authorities(List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
     private static RequestPostProcessor otroOrganizador() {
         return jwt().jwt(b -> b.subject("otro@test.com"))
                 .authorities(List.of(new SimpleGrantedAuthority("ROLE_ORGANIZADOR")));
@@ -162,8 +168,13 @@ class EventoControllerAuthTest {
         return new MockMultipartFile("evento", "", "application/json", json.getBytes(StandardCharsets.UTF_8));
     }
 
+    // 017 FR-005: firmas reales; si los tests subieran bytes basura, el filtro de
+    // magic bytes los rechazaría y todos estos casos darían 400 en vez del 201 esperado.
+    private static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, 1, 2, 3};
+    private static final byte[] WEBP = {'R', 'I', 'F', 'F', 0, 0, 0, 0, 'W', 'E', 'B', 'P', 4, 5, 6};
+
     private static MockMultipartFile imagenJpeg() {
-        return new MockMultipartFile("file", "cartel.jpg", "image/jpeg", new byte[]{1, 2, 3});
+        return new MockMultipartFile("file", "cartel.jpg", "image/jpeg", JPEG);
     }
 
     private Evento evento() {
@@ -210,16 +221,16 @@ class EventoControllerAuthTest {
             e.setId(1L);
             return e;
         });
-        MockMultipartFile hd = new MockMultipartFile("fileHd", "cartel-hd.webp", "image/webp", new byte[]{4, 5, 6});
+        MockMultipartFile hd = new MockMultipartFile("fileHd", "cartel-hd.webp", "image/webp", WEBP);
 
         mockMvc.perform(multipart("/eventos").file(parteEvento(VALIDO)).file(imagenJpeg()).file(hd).with(admin()))
                 .andExpect(status().isCreated());
 
         ArgumentCaptor<Evento> captor = ArgumentCaptor.forClass(Evento.class);
         verify(eventoRepository).save(captor.capture());
-        assertArrayEquals(new byte[]{1, 2, 3}, captor.getValue().getCartel());
+        assertArrayEquals(JPEG, captor.getValue().getCartel());
         assertEquals("image/jpeg", captor.getValue().getCartelContentType());
-        assertArrayEquals(new byte[]{4, 5, 6}, captor.getValue().getCartelHd());
+        assertArrayEquals(WEBP, captor.getValue().getCartelHd());
         assertEquals("image/webp", captor.getValue().getCartelHdContentType());
     }
 
@@ -563,6 +574,33 @@ class EventoControllerAuthTest {
                 .andExpect(status().isBadRequest());
     }
 
+    // 017 US2/FR-002: solo http(s) — javascript: no es un esquema admitido.
+    @Test
+    void post_admin_urlEventoJavascript_400() throws Exception {
+        String json = """
+                {"establecimiento":"Sala","direccion":"Calle 1",
+                 "fecha":"2026-10-01","nombre":"Show","descripcion":"Show",
+                 "urlEvento":"javascript:alert(1)"}""";
+
+        mockMvc.perform(multipart("/eventos").file(parteEvento(json)).file(imagenJpeg()).with(admin()))
+                .andExpect(status().isBadRequest());
+
+        verify(eventoRepository, never()).save(any(Evento.class));
+    }
+
+    // 017 US4/FR-005: Content-Type de mentira; la firma real del fichero no corresponde.
+    @Test
+    void post_admin_imagenConFalsaFirma_400() throws Exception {
+        MockMultipartFile exe = new MockMultipartFile("file", "cartel.jpg", "image/jpeg",
+                "MZ\u0090\u0000\u0003".getBytes(StandardCharsets.ISO_8859_1));
+
+        mockMvc.perform(multipart("/eventos").file(parteEvento(VALIDO)).file(exe).with(admin()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("El archivo no es una imagen válida"));
+
+        verify(eventoRepository, never()).save(any(Evento.class));
+    }
+
     @Test
     void put_anonimo_401() throws Exception {
         mockMvc.perform(multipart("/eventos/1").file(parteEvento(VALIDO))
@@ -665,6 +703,29 @@ class EventoControllerAuthTest {
     void deleteBulk_admin_204() throws Exception {
         mockMvc.perform(delete("/eventos").with(admin()).param("ids", "1,2"))
                 .andExpect(status().isNoContent());
+    }
+
+    // 019 FR-002: el filtro está registrado en la cadena 2 y corta antes del controller
+    @Test
+    void delete_cuentaDemo_403() throws Exception {
+        mockMvc.perform(delete("/eventos/1").with(demo()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error",
+                        org.hamcrest.Matchers.containsString("modo demostración")));
+
+        verify(eventoRepository, never()).findById(anyLong());
+    }
+
+    // 019 US1 AC2: a la cuenta demo solo se le cortan los DELETE, el resto funciona
+    @Test
+    void moderar_cuentaDemo_200() throws Exception {
+        Evento e = eventoDeOrg(EstadoEvento.PENDIENTE_REVISION);
+        when(eventoRepository.findById(1L)).thenReturn(Optional.of(e));
+
+        mockMvc.perform(post("/eventos/1/aprobar").with(demo()))
+                .andExpect(status().isOk());
+
+        assertEquals(EstadoEvento.APROBADO, e.getEstado());
     }
 
     @Test

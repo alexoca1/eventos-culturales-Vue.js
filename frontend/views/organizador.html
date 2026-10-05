@@ -1,4 +1,5 @@
 ﻿<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -19,7 +20,7 @@
                         <button @click="logout()">Cerrar sesión</button>
                     </div>
                 </div>
-                <a v-else class="sesion-entrar" href="../index.html">Ingresar</a>
+                <a v-else class="sesion-entrar" href="login.html">Ingresar</a>
             </template>
         </header>
 
@@ -27,10 +28,10 @@
             <p class="panel-tag">Panel del organizador</p>
             <div class="control">
                 <h3>🔍 Buscar eventos</h3>
-                <p style="margin-top: -0.3em; opacity: 0.85;">Filtra por fecha, etiqueta o texto.</p>
+                <p style="margin-top: -0.3em;">Filtra por fecha, etiqueta o texto.</p>
                 <div class="fecha">
-                    <label for="">Buscar eventos por fecha</label>
-                    <input type="date" @change="buscarPublico(filtrar)" v-model="searchDate">
+                    <label for="buscar-fecha">Buscar eventos por fecha</label>
+                    <input type="date" id="buscar-fecha" @change="buscarPublico(filtrar)" v-model="searchDate">
                     <div class="atajos-fecha">
                         <button type="button" @click="buscarPublico(hoy)">Hoy</button>
                         <button type="button" @click="buscarPublico(finDeSemana)">Este fin de semana</button>
@@ -38,9 +39,9 @@
                     </div>
                 </div>
                 <div class="buscador-texto">
-                    <label>🔍 Buscar por nombre o lugar</label>
+                    <label for="buscar-texto">🔍 Buscar por nombre o lugar</label>
                     <div style="display:flex; gap:var(--space-sm)">
-                        <input type="text" v-model="searchText"
+                        <input type="text" id="buscar-texto" v-model="searchText"
                                placeholder="Ej: Teatro Municipal, Jazz..."
                                minlength="2" maxlength="100"
                                @keyup.enter="buscarPublico(buscarPorTexto)">
@@ -50,9 +51,9 @@
                         {{errBusqueda}}</small>
                 </div>
                 <div class="fecha">
-                    <label for="">Filtrar por etiquetas</label>
-                    <label v-for="t in etiquetasDisponibles" :key="t.id">
-                        <input type="checkbox" :value="t.nombre" v-model="searchEtiquetas" @change="buscarPublico(filtrar)"> {{t.nombre}}
+                    <p class="titulo-grupo">Filtrar por etiquetas</p>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id" :for="'buscar-etq-' + t.id">
+                        <input type="checkbox" :id="'buscar-etq-' + t.id" :value="t.nombre" v-model="searchEtiquetas" @change="buscarPublico(filtrar)"> {{t.nombre}}
                     </label>
                 </div>
             </div>
@@ -116,7 +117,12 @@
                 </div>
                 <div class="mapa">
                     <p>Ubicación</p>
-                    <div v-html="ev.map"></div>
+                    <p v-if="ev.map && !ev.mapaCargado" class="mapa-aviso">
+                        Al cargar el mapa, Google recibirá tu dirección IP.
+                        <a href="privacidad.html" target="_blank">Más información</a>
+                    </p>
+                    <div v-if="ev.mapaCargado" v-html="ev.map"></div>
+                    <button v-else-if="ev.map" type="button" class="mapa-boton" @click="ev.mapaCargado = true">Cargar mapa interactivo</button>
                 </div>
             </div>
             <div class="paginacion" v-show="showEvent && paginaMeta.totalPages > 1">
@@ -139,64 +145,66 @@
                 <h3>{{ editingId ? "Edita tu evento" : "Nuevo evento (quedará pendiente de revisión)" }}</h3>
                 <form @submit.prevent="previsualizar">
                     <div class="fecha">
-                        <label>Ingresar Fecha</label>
+                        <label for="f-fecha">Ingresar Fecha</label>
                         <input type="date" id="f-fecha" v-model="inputDate" style="width: 120px;">
                         <p v-if="errDate" style="color: red;">{{errDate}}</p><br>
                     </div>
                     <div class="fecha">
-                        <label>Fecha fin (opcional, vacío = un día)</label>
-                        <input type="date" v-model="inputFechaFin" style="width: 120px;"><br>
+                        <label for="f-fecha-fin">Fecha fin (opcional, vacío = un día)</label>
+                        <input type="date" id="f-fecha-fin" v-model="inputFechaFin" style="width: 120px;"><br>
                     </div>
                     <div class="fecha">
-                        <label>Hora inicio (opcional)</label>
-                        <input type="time" v-model="inputHoraInicio" style="width: 110px;">
-                        <label>Hora fin (opcional)</label>
-                        <input type="time" v-model="inputHoraFin" style="width: 110px;"><br>
+                        <label for="f-hora-inicio">Hora inicio (opcional)</label>
+                        <input type="time" id="f-hora-inicio" v-model="inputHoraInicio" style="width: 110px;">
+                        <label for="f-hora-fin">Hora fin (opcional)</label>
+                        <input type="time" id="f-hora-fin" v-model="inputHoraFin" style="width: 110px;"><br>
                     </div>
-                    <label>Ingresar Establecimiento</label>
+                    <label for="f-establecimiento">Ingresar Establecimiento</label>
                     <input type="text" id="f-establecimiento" v-model="inputEstablishment">
                     <p v-if="errEstablishment" style="color: red;">{{errEstablishment}}</p><br>
-                    <label>Ingresar Domicilio</label>
+                    <label for="f-direccion">Ingresar Domicilio</label>
                     <input type="text" id="f-direccion" v-model="inputAddress">
                     <p v-if="errAddress" style="color: red;">{{errAddress}}</p><br>
-                    <label>Nombre del evento *</label>
+                    <label for="f-nombre">Nombre del evento *</label>
                     <input type="text" id="f-nombre" v-model="inputNombre">
                     <p v-if="errNombre" style="color: red;">{{errNombre}}</p><br>
-                    <label>Descripción del evento (opcional)</label>
+                    <label for="f-descripcion">Descripción del evento (opcional)</label>
                     <textarea id="f-descripcion" v-model="inputDescripcion" rows="4" style="width: 100%"
                         placeholder="Cuéntanos con más detalle de qué va el evento"></textarea><br>
-                    <label>Etiquetas (sin marcar = Otra)</label>
-                    <label v-for="t in etiquetasDisponibles" :key="t.id">
-                        <input type="checkbox" :value="t.nombre" v-model="inputEtiquetas"> {{t.nombre}}
+                    <p class="titulo-grupo">Etiquetas (sin marcar = Otra)</p>
+                    <label v-for="t in etiquetasDisponibles" :key="t.id" :for="'f-etq-' + t.id">
+                        <input type="checkbox" :id="'f-etq-' + t.id" :value="t.nombre" v-model="inputEtiquetas"> {{t.nombre}}
                     </label><br>
-                    <label>Ingresar Cartel {{ editingId ? "(opcional: se conserva el actual)" : "(obligatorio)" }}</label>
+                    <label for="fileInput">Ingresar Cartel {{ editingId ? "(opcional: se conserva el actual)" : "(obligatorio)" }}</label>
                     <div class="file-input-wrapper">
                         <input type="file" id="fileInput" @change="handleFileUpload" accept="image/jpeg, image/png, image/webp" style="display:none;">
                         <button type="button" onclick="document.getElementById('fileInput').click()">Elegir archivo</button>
                     </div>
                     <p v-if="errCartel" style="color: red;">{{errCartel}}</p><br>
                     <div v-html="inputPoster" v-if="inputPoster"></div>
-                    <label>Galería de fotos (opcional, hasta 5)</label>
+                    <p class="titulo-grupo">Galería de fotos (opcional, hasta 5)</p>
                     <p class="nota">Cada hueco es una foto. Si editas un evento, quitar una foto la borra al guardar.</p>
                     <div class="galeria-slots">
                         <div class="galeria-slot" v-for="orden in galeriaSlots" :key="orden"
                              :class="{ 'galeria-slot-borrar': slotPendienteBorrar(orden) }">
                             <span class="galeria-slot-num">Foto {{ orden + 1 }}</span>
-                            <input type="file" accept="image/jpeg, image/png, image/webp" @change="elegirFotoGaleria(orden, $event)">
+                            <input type="file" accept="image/jpeg, image/png, image/webp"
+                                :aria-label="'Foto ' + (orden + 1) + ' del evento'"
+                                @change="elegirFotoGaleria(orden, $event)">
                             <img v-if="slotOcupado(orden)" :src="slotPreview(orden)" class="galeria-slot-preview"
                                 alt="Miniatura de la foto {{ orden + 1 }}">
                             <button type="button" class="galeria-slot-quitar" v-if="slotOcupado(orden)"
                                 @click="quitarFotoGaleria(orden)" :aria-label="'Quitar la foto ' + (orden + 1)">×</button>
                         </div>
                     </div><br>
-                    <label>Teléfono de contacto (opcional)</label>
-                    <input type="tel" v-model="inputTelefono" placeholder="+34 600 000 000">
-                    <label>Enlace del evento (opcional)</label>
-                    <input type="url" v-model="inputUrlEvento" placeholder="https://...">
-                    <label>Redes sociales del evento (opcional)</label>
+                    <label for="f-telefono">Teléfono de contacto (opcional)</label>
+                    <input type="tel" id="f-telefono" v-model="inputTelefono" placeholder="+34 600 000 000">
+                    <label for="f-url-evento">Enlace del evento (opcional)</label>
+                    <input type="url" id="f-url-evento" v-model="inputUrlEvento" placeholder="https://...">
+                    <p class="titulo-grupo">Redes sociales del evento (opcional)</p>
                     <button type="button" @click="añadirRed()" :disabled="inputRedes.length >= 8">Añadir red social</button>
                     <div class="red-social-row" v-for="(r, i) in inputRedes" :key="i">
-                        <select v-model="r.red">
+                        <select v-model="r.red" :aria-label="'Red social ' + (i + 1)">
                             <option value="FACEBOOK">Facebook</option>
                             <option value="INSTAGRAM">Instagram</option>
                             <option value="X">X (Twitter)</option>
@@ -206,11 +214,12 @@
                             <option value="WHATSAPP">WhatsApp</option>
                             <option value="TELEGRAM">Telegram</option>
                         </select>
-                        <input type="url" v-model="r.url" placeholder="https://...">
+                        <input type="url" v-model="r.url" placeholder="https://..."
+                            :aria-label="'Enlace de la red social ' + (i + 1)">
                         <button type="button" @click="quitarRed(i)">×</button>
                     </div><br>
-                    <label>Ingresar Mapa</label>
-                    <textarea v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
+                    <label for="f-mapa">Ingresar Mapa</label>
+                    <textarea id="f-mapa" v-model="inputMap" placeholder="Pega aquí el código iframe de Google Maps" rows="4" style="width: 100%"></textarea>
                     <p><strong>Paso 1 de 2:</strong> previsualiza cómo quedará tu evento; después podrás confirmarlo.</p>
                     <button type="submit">Previsualizar antes de confirmar</button>
                     <button type="button" @click="cancelForm(); showMisEventos = true">Cancelar</button>
@@ -241,7 +250,12 @@
                     </div>
                     <div class="mapa">
                         <p>Ubicación</p>
-                        <div v-html="previewEv.map"></div>
+                        <p v-if="previewEv.map && !previewEv.mapaCargado" class="mapa-aviso">
+                            Al cargar el mapa, Google recibirá tu dirección IP.
+                            <a href="privacidad.html" target="_blank">Más información</a>
+                        </p>
+                        <div v-if="previewEv.mapaCargado" v-html="previewEv.map"></div>
+                        <button v-else-if="previewEv.map" type="button" class="mapa-boton" @click="previewEv.mapaCargado = true">Cargar mapa interactivo</button>
                     </div>
                 </div>
                 <div class="aviso-revision">
@@ -257,25 +271,34 @@
 
             <div class="mostrar_ingresar" v-show="showPerfil">
                 <h3>Mi perfil</h3>
-                <label>Nombre</label>
-                <input type="text" v-model="perfilNombre"><br>
-                <label>Apellidos</label>
-                <input type="text" v-model="perfilApellidos"><br>
-                <label>Teléfono (obligatorio)</label>
-                <input type="tel" v-model="perfilTelefono"><br>
+                <label for="perfil-nombre">Nombre</label>
+                <input type="text" id="perfil-nombre" v-model="perfilNombre"><br>
+<label for="perfil-apellidos">Apellidos</label>
+                    <input type="text" id="perfil-apellidos" v-model="perfilApellidos"><br>
+                    <label for="perfil-email">Correo electrónico (obligatorio, con este inicias sesión)</label>
+                    <input type="email" id="perfil-email" v-model.trim="perfilEmail"><br>
+                <label for="perfil-telefono">Teléfono (obligatorio)</label>
+                <input type="tel" id="perfil-telefono" v-model="perfilTelefono"><br>
                 <h4>Mi organización</h4>
-                <label>Nombre de la organización (obligatorio)</label>
-                <input type="text" v-model="perfilOrgNombre"><br>
-                <label>Encargado: nombre (obligatorio)</label>
-                <input type="text" v-model="perfilEncNombre"><br>
-                <label>Encargado: teléfono (obligatorio)</label>
-                <input type="tel" v-model="perfilEncTelefono"><br>
-                <label>Encargado: correo (obligatorio)</label>
-                <input type="email" v-model="perfilEncEmail"><br>
+                <label for="perfil-org-nombre">Nombre de la organización (obligatorio)</label>
+                <input type="text" id="perfil-org-nombre" v-model="perfilOrgNombre"><br>
+                <label for="perfil-enc-nombre">Encargado: nombre (obligatorio)</label>
+                <input type="text" id="perfil-enc-nombre" v-model="perfilEncNombre"><br>
+                <label for="perfil-enc-telefono">Encargado: teléfono (obligatorio)</label>
+                <input type="tel" id="perfil-enc-telefono" v-model="perfilEncTelefono"><br>
+                <label for="perfil-enc-email">Encargado: correo (obligatorio)</label>
+                <input type="email" id="perfil-enc-email" v-model="perfilEncEmail"><br>
                 <button @click="guardarPerfil(true)">Guardar</button>
                 <button @click="cerrarPerfil()">Cerrar</button>
                 <p v-if="perfilError" style="color: red;">{{perfilError}}</p>
                 <p v-if="perfilOk" style="color: green;">Guardado.</p>
+                <button v-if="!confirmarBorrado" class="perfil-borrado" @click="pedirBorrado()">Eliminar mi cuenta</button>
+                <div v-else class="dialogo-borrado">
+                    <p>¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer. Tus datos personales serán anonimizados conforme al RGPD. Los eventos que hayas publicado se conservarán sin vinculación a tu identidad.</p>
+                    <p v-if="borradoError" style="color: red;">{{borradoError}}</p>
+                    <button @click="cancelarBorrado()">Cancelar</button>
+                    <button @click="eliminarCuenta()">Sí, eliminar mi cuenta</button>
+                </div>
             </div>
 
             <div class="mostrar_ingresar" v-show="showPanel">
@@ -326,7 +349,12 @@
                     </div>
                     <div class="mapa">
                         <p>Ubicación</p>
-                        <div v-html="ev.map"></div>
+                        <p v-if="ev.map && !ev.mapaCargado" class="mapa-aviso">
+                            Al cargar el mapa, Google recibirá tu dirección IP.
+                            <a href="privacidad.html" target="_blank">Más información</a>
+                        </p>
+                        <div v-if="ev.mapaCargado" v-html="ev.map"></div>
+                        <button v-else-if="ev.map" type="button" class="mapa-boton" @click="ev.mapaCargado = true">Cargar mapa interactivo</button>
                     </div>
                 </div>
                 <div class="paginacion" v-show="paginaMeta.totalPages > 1">
@@ -371,7 +399,13 @@
                     </div>
                 </div>
             </div>
-            <p class="footer-copy">© 2024–2025 Asociación Cultural Puertollano · Todos los derechos reservados</p>
+            <p class="footer-copy">© 2024–2026 Asociación Cultural Puertollano · Proyecto educativo de portafolio, con datos ficticios e imágenes generadas con IA</p>
+            <nav class="footer-legal" aria-label="Enlaces legales">
+                <a href="avisoLegal.html">Aviso Legal</a>
+                <a href="privacidad.html">Política de Privacidad</a>
+                <a href="terminos.html">Términos de Uso</a>
+                <a href="mailto:reportes@culturalpuertollano.es?subject=Reporte%20de%20contenido">Reportar contenido</a>
+            </nav>
         </footer>
     </div>
 

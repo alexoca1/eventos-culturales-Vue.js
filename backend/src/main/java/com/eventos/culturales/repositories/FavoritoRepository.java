@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.repositories;
 
 import com.eventos.culturales.entities.EstadoEvento;
@@ -19,8 +21,15 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
 
     List<Favorito> findByUsuarioAndEventoEstado(Usuario usuario, EstadoEvento estado);
 
+    // 018 FR-002: exportación de datos del usuario
+    List<Favorito> findByUsuario(Usuario usuario);
+
     @Transactional
     void deleteByEvento(Evento evento);
+
+    // 018 FR-001: supresión de cuenta — se borran los favoritos, no el usuario
+    @Transactional
+    void deleteByUsuario(Usuario usuario);
 
     List<Favorito> findByEventoFechaAndEventoEstadoAndRecordatorioEnviadoFalse(
             LocalDate fecha, EstadoEvento estado, boolean recordatorioEnviado);

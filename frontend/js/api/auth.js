@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 // Repository de autenticación y usuarios (Fase 2 de 008-refactor-modular-esm).
 // Mueve los fetch de validateAdmin, register, logout, cargarUsuarios (+perfil),
 // crearAdmin, editarRolesUsuario y toggleActivo desde eventos.js, misma URL/método/body,
@@ -29,7 +31,18 @@ export async function register({ email, password, nombre, apellidos, telefono })
         authFail: "return"
     });
     if (r.ok) return { ok: true };
-    return { ok: false, error: (r.data && r.data.error) || "No se pudo crear la cuenta" };
+    // La validación de Spring devuelve {campo: mensaje}, no {error}: si no se
+    // traduce aquí el usuario ve "No se pudo crear la cuenta" sin saber por qué.
+    return { ok: false, error: mensajeValidacion(r.data) || "No se pudo crear la cuenta" };
+}
+
+function mensajeValidacion(data) {
+    if (!data) return null;
+    if (data.error) return data.error;
+    if (data.password) return data.password;
+    if (data.email) return data.email;
+    const resto = Object.values(data);
+    return resto.length ? resto[0] : null;
 }
 
 // POST /auth/logout — traga cualquier fallo (sin red, igual se limpia la sesión local).
@@ -73,19 +86,27 @@ export async function crearAdmin({ email, password, nombre, apellidos, telefono 
         networkAlert: false
     });
     if (r.ok) return { ok: true };
-    return { ok: false, error: (r.data && r.data.error) || "No se pudo crear" };
+    return { ok: false, error: mensajeValidacion(r.data) || "No se pudo crear" };
 }
 
 // PUT /auth/perfil — edita los datos propios (nunca rol/estado); el error viaja en campo.
+// 023: mensajeValidacion y no solo `.error`, porque el email ahora pasa por @Valid y
+// un formato inválido vuelve como {email: "..."}. Con solo `.error` el usuario veía
+// "No se pudo guardar" sin saber qué corregir.
+// 023: authFail "return" porque el 403 de la cuenta demo trae mensaje propio que hay que
+// enseñar. Con el "redirect" por defecto, http.js lo trataba como sesión caducada (alerta,
+// borra el token y manda al login) y el perfil cerraba la sesión en vez de explicar nada:
+// eso incumplía SC-003 de la spec 023. El 401 sí lo gestiona el composable.
 export async function actualizarPerfil(body) {
     const r = await authFetch(`${API}/auth/perfil`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify(body),
-        networkAlert: false
+        networkAlert: false,
+        authFail: "return"
     });
     if (r.ok) return { ok: true, perfil: r.data };
-    return { ok: false, status: r.status, error: (r.data && r.data.error) || "No se pudo guardar" };
+    return { ok: false, status: r.status, error: mensajeValidacion(r.data) || "No se pudo guardar" };
 }
 
 // PUT /auth/usuarios/{id} — body { roles } o { enabled }; el error viaja en campo.

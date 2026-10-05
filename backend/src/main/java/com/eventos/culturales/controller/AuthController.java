@@ -1,11 +1,19 @@
+// SPDX-License-Identifier: MIT
+
 package com.eventos.culturales.controller;
 
 import com.eventos.culturales.dto.ActualizarPerfilRequest;
+import com.eventos.culturales.config.DemoAccountProtectionFilter;
 import com.eventos.culturales.dto.ActualizarUsuarioRequest;
+import com.eventos.culturales.dto.EventoResponseDTO;
 import com.eventos.culturales.dto.LoginRequest;
 import com.eventos.culturales.dto.RegisterRequest;
+import com.eventos.culturales.dto.UserDataExportDTO;
+import com.eventos.culturales.entities.Favorito;
 import com.eventos.culturales.entities.RefreshToken;
 import com.eventos.culturales.entities.Usuario;
+import com.eventos.culturales.repositories.EventoRepository;
+import com.eventos.culturales.repositories.FavoritoRepository;
 import com.eventos.culturales.repositories.UsuarioRepository;
 import com.eventos.culturales.services.JwtService;
 import com.eventos.culturales.services.RefreshTokenService;
@@ -25,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +48,8 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final EventoRepository eventoRepository;
+    private final FavoritoRepository favoritoRepository;
     private final boolean cookieSecure;
     private final String cookieSameSite;
 
@@ -51,6 +62,8 @@ public class AuthController {
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokenService,
+            EventoRepository eventoRepository,
+            FavoritoRepository favoritoRepository,
             @Value("${app.cookie.secure:false}") boolean cookieSecure,
             @Value("${app.cookie.same-site:Lax}") String cookieSameSite
     ) {
@@ -59,6 +72,8 @@ public class AuthController {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+        this.eventoRepository = eventoRepository;
+        this.favoritoRepository = favoritoRepository;
         this.cookieSecure = cookieSecure;
         this.cookieSameSite = cookieSameSite;
     }
@@ -276,12 +291,36 @@ public class AuthController {
     // Punto 4: cada usuario edita sus propios datos (nunca rol ni estado).
     // Teléfono obligatorio (no se puede vaciar); los datos de organización solo
     // aplican si es ORGANIZADOR (para el resto se ignoran) y deben quedar completos.
+    // 023: el email también es editable, con trim, no-op si no cambia, 403 en la cuenta
+    // demo y 409 si el correo ya está en uso.
     @PutMapping("/perfil")
-    public ResponseEntity<?> actualizarPerfil(@RequestBody ActualizarPerfilRequest req,
+    public ResponseEntity<?> actualizarPerfil(@Valid @RequestBody ActualizarPerfilRequest req,
                                               Authentication authentication) {
         org.springframework.security.oauth2.jwt.Jwt jwt = (org.springframework.security.oauth2.jwt.Jwt) authentication.getPrincipal();
         Usuario usuario = usuarioRepository.findByEmail(jwt.getSubject())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // 023: el email es editable, pero es el `subject` del JWT. Guardarlo sin más
+        // deja al token actual sin identificar a nadie (todo request posterior buscaría
+        // por un email que ya no existe), así que el cliente renueva el token después.
+        // No se pide la contraseña actual: lo que protege de verdad un cambio de email es
+        // verificar el correo nuevo, no reautenticar (ver spec 023, limitaciones).
+        if (req.email() != null) {
+            String emailNuevo = req.email().trim();
+            if (!emailNuevo.isBlank() && !emailNuevo.equalsIgnoreCase(usuario.getEmail())) {
+                if (DemoAccountProtectionFilter.DEMO_EMAIL.equalsIgnoreCase(usuario.getEmail())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "Acción no permitida en modo demostración. Esta cuenta tiene permisos limitados para proteger los datos."));
+                }
+                // Usuario.email es UNIQUE: sin esta comprobación el save revienta con
+                // DataIntegrityViolationException y el usuario ve un 500 sin explicación.
+                if (usuarioRepository.findByEmail(emailNuevo).isPresent()) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT)
+                            .body(Map.of("error", "Ese correo ya está en uso"));
+                }
+                usuario.setEmail(emailNuevo);
+            }
+        }
 
         if (req.nombre() != null) {
             if (req.nombre().isBlank()) {
@@ -322,6 +361,64 @@ public class AuthController {
 
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
+    }
+
+    // 018 FR-001: supresión de cuenta (derecho al olvido). Se anonimiza la fila en vez de
+    // borrarla: los eventos que creó siguen apuntando a `creadoPor`, así que se disocian de
+    // la PERSONA (no queda email, nombre, teléfono, apellidos ni datos del encargado) pero
+    // se conserva la trazabilidad que exige la LSSI. El access JWT sigue siendo válido hasta
+    // que expire (stateless, 15 min); los refresh tokens sí se borran, así que la sesión no
+    // sobrevive al siguiente refresh y con el email original ya no se puede volver a entrar.
+    // Orden: los borrados primero y el save al final — si algo fallara a medias, el usuario
+    // sigue localizable por su email original y el reintento termina el trabajo.
+    @DeleteMapping("/perfil")
+    public ResponseEntity<?> eliminarPerfil(Authentication authentication) {
+        Usuario usuario = usuarioActual(authentication);
+
+        refreshTokenService.revokeAllFor(usuario);
+        favoritoRepository.deleteByUsuario(usuario);
+
+        usuario.setEmail("deleted_" + Instant.now().getEpochSecond() + "@removed.local");
+        usuario.setNombre("Usuario eliminado");
+        usuario.setPassword("");   // columna nullable=false: no puede quedar null
+        usuario.setEnabled(false);
+        usuario.setTelefono(null);
+        usuario.setApellidos(null);
+        usuario.setNombreOrganizacion(null);
+        usuario.setEncargadoNombre(null);
+        usuario.setEncargadoTelefono(null);
+        usuario.setEncargadoEmail(null);
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok(Map.of("message", "Cuenta eliminada y datos anonimizados"));
+    }
+
+    // 018 FR-002: portabilidad de datos (art. 20 RGPD) — extracto JSON con todo lo que
+    // el sistema tiene del usuario. Nunca se incluye el hash de la contraseña.
+    @GetMapping("/perfil/exportar")
+    public ResponseEntity<UserDataExportDTO> exportarPerfil(Authentication authentication) {
+        Usuario usuario = usuarioActual(authentication);
+
+        List<EventoResponseDTO> creados = eventoRepository.findByCreadoPor(usuario).stream()
+                .map(EventoResponseDTO::fromEntity)
+                .toList();
+        List<EventoResponseDTO> favoritos = favoritoRepository.findByUsuario(usuario).stream()
+                .map(Favorito::getEvento)
+                .map(EventoResponseDTO::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(new UserDataExportDTO(
+                usuario.getId(), usuario.getEmail(), usuario.getNombre(), usuario.getApellidos(),
+                usuario.getTelefono(), usuario.getNombreOrganizacion(),
+                usuario.getEncargadoNombre(), usuario.getEncargadoTelefono(), usuario.getEncargadoEmail(),
+                usuario.getRoles(), usuario.getFechaRegistro(), creados, favoritos));
+    }
+
+    private Usuario usuarioActual(Authentication authentication) {
+        org.springframework.security.oauth2.jwt.Jwt jwt =
+                (org.springframework.security.oauth2.jwt.Jwt) authentication.getPrincipal();
+        return usuarioRepository.findByEmail(jwt.getSubject())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 
     // Editar roles y estado de un usuario (solo ADMIN). La protección de

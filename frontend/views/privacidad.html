@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad — Eventos Culturales Puertollano</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/eventos.css">
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <h1>Política de Privacidad</h1>
+            <a href="../index.html" class="btn-secondary">← Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main class="legal-container">
+        <section class="legal-card">
+            <h2>1. Responsable del tratamiento</h2>
+            <p>Proyecto de Portafolio Técnico «Eventos Culturales Puertollano», de carácter
+                educativo y sin actividad comercial. Contacto: <a
+                    href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>.</p>
+
+            <h2>2. Qué datos tratamos</h2>
+            <ul>
+                <li><strong>Datos de registro:</strong> email, contraseña (guardada cifrada, nunca en texto
+                    claro), nombre, apellidos y teléfono. Solo los introduces tú al crear la cuenta.</li>
+                <li><strong>Datos de actividad:</strong> los eventos que marcas como favoritos y los que creas
+                    si tienes rol de organizador o administrador.</li>
+                <li><strong>Datos técnicos mínimos:</strong> el token de sesión se guarda en la memoria del
+                    navegador (<code>sessionStorage</code>) y caduca; no usamos cookies de terceros, píxeles
+                    de seguimiento ni herramientas de analítica.</li>
+                <li><strong>Cookie técnica de sesión:</strong> el sistema utiliza una cookie
+                    <code>refreshToken</code> (<code>HttpOnly</code>, sin acceso desde JavaScript),
+                    estrictamente necesaria para mantener la autenticación, por lo que está exenta de
+                    consentimiento conforme al artículo 22.2 de la LSSI-CE.</li>
+            </ul>
+
+            <h2>3. Para qué y con qué base legal</h2>
+            <p>Tratamos tus datos para <strong>prestar el servicio que solicitas</strong>: crear y mantener tu
+                cuenta, mostrarte tus favoritos y publicar los eventos que envíes. La base legal es tu
+                <strong>consentimiento</strong>, que otorgas al marcar la casilla de registro, y la
+                <strong>ejecución del contrato</strong> que implica usar la plataforma.</p>
+
+            <h2>4. Cuánto tiempo los conservamos</h2>
+            <p>Mientras tu cuenta esté activa. Si decides eliminarla, se anonimiza de forma irreversible
+                (ver punto 8) y desaparecen tus favoritos y tus tokens de sesión.</p>
+
+            <h2>5. Con quién se comparten</h2>
+            <p>No vendemos ni cedemos tus datos a terceros. Dos casos concretos de uso externo:</p>
+            <ul>
+                <li><strong>Google Maps:</strong> los mapas de los eventos se cargan <strong>solo cuando pulsas
+                        el botón de mapa</strong>, nunca automáticamente, y solo entonces Google recibe tu
+                    dirección IP. Ninguna otra petición sale hacia Google.</li>
+                <li><strong>Servidor de la demo:</strong> la base de datos MySQL y el backend Spring Boot viven
+                    en el mismo entorno de despliegue de la demo.</li>
+            </ul>
+
+            <h2>6. Transferencias internacionales</h2>
+            <p>Cuando cargas el mapa de un evento de forma voluntaria, Google Maps puede transferir
+                tu dirección IP a servidores situados fuera del Espacio Económico Europeo. Ese
+                tratamiento se rige por las Cláusulas Contractuales Tipo aprobadas por la Comisión
+                Europea.</p>
+
+            <h2>7. Retirada del consentimiento</h2>
+            <p>Puedes retirar en cualquier momento el consentimiento que nos hayas otorgado, por
+                ejemplo para recibir recordatorios por correo electrónico, que dejan de enviarse en
+                cuanto quitas el evento de tus favoritos. La retirada no afecta a la licitud del
+                tratamiento basado en el consentimiento con anterioridad a su retirada; para cualquier
+                otro consentimiento puedes escribirnos a <a
+                    href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>.</p>
+
+            <h2>8. Tus derechos</h2>
+            <p>Puedes ejercerlos en cualquier momento; los tres primeros haces tú mismo sin escribir
+                a nadie:</p>
+            <ul>
+                <li><strong>Descarga de tus datos (portabilidad):</strong> <code>GET /auth/perfil/exportar</code>
+                    devuelve todo tu perfil, tus eventos y tus favoritos en JSON.</li>
+                <li><strong>Supresión de la cuenta:</strong> <code>DELETE /auth/perfil</code> elimina tus datos
+                    personales y favoritos y anonimiza la fila de forma irreversible.</li>
+                <li><strong>Rectificación:</strong> puedes editar nombre, apellidos, teléfono y organización
+                    desde tu perfil.</li>
+                <li><strong>Acceso:</strong> consultar los datos que tratamos sobre ti;
+                    <code>GET /auth/perfil</code> los devuelve todos y puedes descargarlos completos con
+                    la portabilidad del primer punto.</li>
+                <li><strong>Oposición:</strong> oponerte a determinados tratamientos, en especial a los
+                    que se realizan con fines de comunicación directa, escribiéndonos a <a
+                        href="mailto:info@culturalpuertollano.es">info@culturalpuertollano.es</a>.</li>
+                <li><strong>Limitación del tratamiento:</strong> pedir que bloqueemos temporalmente el
+                    uso de tus datos mientras se resuelve una reclamación, en la misma dirección de
+                    contacto.</li>
+            </ul>
+            <p>Además, si consideras que el tratamiento no se ajusta a la normativa, tienes derecho a
+                presentar una reclamación ante la <strong>Agencia Española de Protección de Datos
+                (AEPD)</strong>.</p>
+
+            <h2>9. Menores de 14 años</h2>
+            <p>Esta plataforma no está dirigida a menores de 14 años; el registro obliga a declarar esa edad.
+                Si detectamos una cuenta de un menor de 14 años, se eliminará.</p>
+
+            <h2>10. Seguridad</h2>
+            <p>Contraseñas cifradas, comunicación siempre por HTTPS, tokens JWT de corta duración con refresh
+                rotado y controles de acceso por rol en cada endpoint. Ningún sistema es infalible, pero no
+                guardamos datos de pago ni datos de tarjeta porque no existe ninguna pasarela de pago.</p>
+
+            <h2>11. Cambios en esta política</h2>
+            <p>Cualquier modificación sustancial se publicará en esta misma página.</p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p class="footer-copy">© 2024–2026 Plataforma de Eventos Culturales Puertollano (Proyecto Educativo de Portafolio · datos ficticios e imágenes generadas con IA)</p>
+        <nav class="footer-legal" aria-label="Enlaces legales">
+            <a href="avisoLegal.html">Aviso Legal</a>
+            <a href="privacidad.html">Política de Privacidad</a>
+            <a href="terminos.html">Términos de Uso</a>
+            <a href="mailto:reportes@culturalpuertollano.es?subject=Reporte%20de%20contenido">Reportar contenido</a>
+        </nav>
+    </footer>
+</body>
+
+</html>

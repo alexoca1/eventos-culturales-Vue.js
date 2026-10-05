@@ -23,6 +23,8 @@ Completa el punto que quedó pendiente en `004-flujo-aprobacion-organizadores`: 
 1. **Given** login exitoso con solo `ROLE_USER`, **When** se completa, **Then** redirige a `views/usuarioEstandar.html` con el token en `sessionStorage`.
 2. **Given** el usuario ya está en `usuarioEstandar.html` autenticado, **When** recarga la página, **Then** sigue reconocido como logueado (no se le pide login de nuevo mientras el token siga válido).
 
+> **Nota (2026-10-05)**: la UI de login tiene dos entradas — `index.html` (raíz) y `views/login.html`. El **destino** de esta scenario no cambia; la ruta se construye ahora relativa al documento con prefijo según el contexto (`views/` en la raíz, vacío dentro de `views/`), así que el login hecho desde cualquiera de las dos lleva a `views/usuarioEstandar.html` sin caer en `views/views/`.
+
 ---
 
 ### User Story 3 - Marcar/desmarcar favorito desde la tarjeta de evento (Priority: P1)
